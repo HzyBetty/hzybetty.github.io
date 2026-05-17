@@ -31,11 +31,6 @@
       --blue-tag:  #185FA5;
       --purple-bg: #F0EDFB;
       --purple-tag:#5B3DA8;
-      --amber-bar1:#EF9F27;
-      --amber-bar2:#BA7517;
-      --amber-bar3:#854F0B;
-      --amber-bar4:#633806;
-      --amber-line:#FAC775;
       --radius-md: 8px;
       --radius-lg: 14px;
     }
@@ -129,15 +124,9 @@
       transition: border-color 0.2s ease, transform 0.18s ease;
     }
 
-    .card:hover {
-      border-color: var(--border-md);
-      transform: translateY(-3px);
-    }
+    .card:hover { border-color: var(--border-md); transform: translateY(-3px); }
 
-    .card.placeholder {
-      opacity: 0.45;
-      pointer-events: none;
-    }
+    .card.placeholder { opacity: 0.45; pointer-events: none; }
 
     .thumb {
       width: 100%;
@@ -145,22 +134,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+      position: relative;
     }
 
     .thumb-promo  { background: var(--amber-bg); }
     .thumb-rag    { background: var(--blue-bg); }
     .thumb-muted  { background: var(--bg-muted); }
 
-    .card-body {
-      padding: 1rem 1.1rem 1.15rem;
-    }
+    .card-body { padding: 1rem 1.1rem 1.15rem; }
 
-    .tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-bottom: 0.55rem;
-    }
+    .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 0.55rem; }
 
     .tag {
       font-size: 10px;
@@ -199,17 +183,8 @@
       justify-content: space-between;
     }
 
-    .card-metric {
-      font-size: 11px;
-      color: var(--text-ter);
-    }
-
-    .card-arrow {
-      font-size: 15px;
-      color: var(--text-ter);
-      transition: transform 0.15s, color 0.15s;
-    }
-
+    .card-metric { font-size: 11px; color: var(--text-ter); }
+    .card-arrow  { font-size: 15px; color: var(--text-ter); transition: transform 0.15s, color 0.15s; }
     .card:hover .card-arrow { transform: translateX(3px); color: var(--text-sec); }
 
     .footer {
@@ -263,16 +238,30 @@
     <!-- ── PROJECT 1: Promotion Response Prediction ── -->
     <a class="card" href="projects/promotion-response/index.html">
       <div class="thumb thumb-promo">
-        <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <rect x="6"  y="40" width="11" height="22" rx="2" fill="#EF9F27" opacity="0.7"/>
-          <rect x="21" y="30" width="11" height="32" rx="2" fill="#BA7517" opacity="0.8"/>
-          <rect x="36" y="20" width="11" height="42" rx="2" fill="#854F0B" opacity="0.9"/>
-          <rect x="51" y="10" width="11" height="52" rx="2" fill="#633806"/>
-          <polyline points="11.5,38 26.5,28 41.5,18 56.5,8" stroke="#FAC775" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          <circle cx="11.5" cy="38"  r="3" fill="#FAC775"/>
-          <circle cx="26.5" cy="28"  r="3" fill="#FAC775"/>
-          <circle cx="41.5" cy="18"  r="3" fill="#FAC775"/>
-          <circle cx="56.5" cy="8"   r="3" fill="#FAC775"/>
+        <!-- Vivid thumbnail: customer segments + lift curve + AUC callout -->
+        <svg width="200" height="124" viewBox="0 0 200 124" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- Background grid lines -->
+          <line x1="20" y1="20" x2="20" y2="95" stroke="#EF9F27" stroke-width="0.4" opacity="0.3"/>
+          <line x1="20" y1="95" x2="185" y2="95" stroke="#EF9F27" stroke-width="0.4" opacity="0.3"/>
+          <!-- ROC random diagonal -->
+          <line x1="20" y1="95" x2="185" y2="20" stroke="#FAC775" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+          <!-- ROC model curve -->
+          <path d="M20,95 C40,90 55,65 75,48 C95,32 120,25 185,20" stroke="#EF9F27" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+          <!-- AUC fill -->
+          <path d="M20,95 C40,90 55,65 75,48 C95,32 120,25 185,20 L185,95 Z" fill="#EF9F27" opacity="0.08"/>
+          <!-- AUC label -->
+          <rect x="118" y="60" width="52" height="20" rx="4" fill="#FAF0E8" stroke="#EF9F27" stroke-width="0.8"/>
+          <text x="144" y="74" text-anchor="middle" font-size="9.5" fill="#854F0B" font-family="DM Sans,sans-serif" font-weight="600">AUC 0.713</text>
+          <!-- Customer segments dots (scatter) -->
+          <circle cx="48"  cy="72" r="4.5" fill="#EF9F27" opacity="0.9"/>
+          <circle cx="62"  cy="58" r="3.5" fill="#BA7517" opacity="0.85"/>
+          <circle cx="76"  cy="50" r="5"   fill="#EF9F27" opacity="0.7"/>
+          <circle cx="90"  cy="42" r="3"   fill="#854F0B" opacity="0.9"/>
+          <circle cx="105" cy="36" r="4"   fill="#EF9F27" opacity="0.8"/>
+          <circle cx="120" cy="30" r="3.5" fill="#BA7517" opacity="0.75"/>
+          <!-- Axis labels -->
+          <text x="100" y="110" text-anchor="middle" font-size="7.5" fill="#A09890" font-family="DM Sans,sans-serif">False Positive Rate</text>
+          <text x="8" y="60" text-anchor="middle" font-size="7.5" fill="#A09890" font-family="DM Sans,sans-serif" transform="rotate(-90,8,60)">True Positive Rate</text>
         </svg>
       </div>
       <div class="card-body">
@@ -293,20 +282,46 @@
     <!-- ── PROJECT 2: Conversational RAG Agent ── -->
     <a class="card" href="projects/conversational-rag-agent/index.html">
       <div class="thumb thumb-rag">
-        <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <!-- Chat bubbles -->
-          <rect x="8" y="10" width="36" height="18" rx="5" fill="#185FA5" opacity="0.18"/>
-          <rect x="8" y="10" width="36" height="18" rx="5" stroke="#185FA5" stroke-width="1.2" fill="none" opacity="0.6"/>
-          <line x1="14" y1="17" x2="36" y2="17" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
-          <line x1="14" y1="22" x2="30" y2="22" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-          <!-- Response bubble -->
-          <rect x="22" y="34" width="38" height="20" rx="5" fill="#185FA5" opacity="0.12"/>
-          <rect x="22" y="34" width="38" height="20" rx="5" stroke="#185FA5" stroke-width="1.2" fill="none" opacity="0.5"/>
-          <line x1="28" y1="41" x2="52" y2="41" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
-          <line x1="28" y1="46" x2="44" y2="46" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-          <!-- RAG dot indicator -->
-          <circle cx="56" cy="14" r="5" fill="#185FA5" opacity="0.85"/>
-          <text x="56" y="18" text-anchor="middle" font-size="6" fill="white" font-family="sans-serif" font-weight="700">R</text>
+        <!-- Vivid thumbnail: chat bubbles + retrieval pipeline + cited answer -->
+        <svg width="200" height="124" viewBox="0 0 200 124" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- User bubble -->
+          <rect x="12" y="14" width="100" height="22" rx="6" fill="#185FA5" opacity="0.15"/>
+          <rect x="12" y="14" width="100" height="22" rx="6" stroke="#185FA5" stroke-width="1" opacity="0.5"/>
+          <line x1="20" y1="23" x2="92" y2="23" stroke="#185FA5" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+          <line x1="20" y1="29" x2="72" y2="29" stroke="#185FA5" stroke-width="1.4" stroke-linecap="round" opacity="0.45"/>
+          <!-- User avatar dot -->
+          <circle cx="8" cy="25" r="4" fill="#185FA5" opacity="0.5"/>
+
+          <!-- Retrieval: three chunk badges -->
+          <rect x="22" y="46" width="44" height="14" rx="3" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.6"/>
+          <text x="44" y="56.5" text-anchor="middle" font-size="7" fill="#185FA5" font-family="DM Sans,sans-serif" font-weight="500">93% match</text>
+          <rect x="72" y="46" width="44" height="14" rx="3" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.6"/>
+          <text x="94" y="56.5" text-anchor="middle" font-size="7" fill="#185FA5" font-family="DM Sans,sans-serif" font-weight="500">91% match</text>
+          <rect x="122" y="46" width="44" height="14" rx="3" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.6"/>
+          <text x="144" y="56.5" text-anchor="middle" font-size="7" fill="#185FA5" font-family="DM Sans,sans-serif" font-weight="500">85% match</text>
+
+          <!-- Arrow down to response -->
+          <line x1="100" y1="36" x2="100" y2="43" stroke="#185FA5" stroke-width="1" opacity="0.4" marker-end="url(#arr2)"/>
+
+          <!-- Agent response bubble -->
+          <rect x="28" y="68" width="140" height="36" rx="6" fill="#185FA5" opacity="0.1"/>
+          <rect x="28" y="68" width="140" height="36" rx="6" stroke="#185FA5" stroke-width="1" opacity="0.4"/>
+          <line x1="38" y1="78" x2="158" y2="78" stroke="#185FA5" stroke-width="1.3" stroke-linecap="round" opacity="0.6"/>
+          <line x1="38" y1="85" x2="148" y2="85" stroke="#185FA5" stroke-width="1.3" stroke-linecap="round" opacity="0.45"/>
+          <!-- Citation underline -->
+          <line x1="38" y1="95" x2="90" y2="95" stroke="#185FA5" stroke-width="1.2" stroke-linecap="round" opacity="0.8"/>
+          <line x1="38" y1="97.5" x2="90" y2="97.5" stroke="#185FA5" stroke-width="0.6" stroke-linecap="round" opacity="0.4"/>
+          <text x="38" y="95.5" font-size="6.5" fill="#185FA5" font-family="DM Sans,sans-serif" opacity="0.85">Sources: Authentication · 2FA Org</text>
+
+          <!-- Agent avatar -->
+          <circle cx="192" cy="86" r="5" fill="#185FA5" opacity="0.7"/>
+          <text x="192" y="89" text-anchor="middle" font-size="6" fill="white" font-family="sans-serif" font-weight="700">AI</text>
+
+          <defs>
+            <marker id="arr2" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+              <path d="M0,0 L5,2.5 L0,5 Z" fill="#185FA5" opacity="0.4"/>
+            </marker>
+          </defs>
         </svg>
       </div>
       <div class="card-body">

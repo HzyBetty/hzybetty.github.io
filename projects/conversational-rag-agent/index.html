@@ -68,7 +68,7 @@
     .chart-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:.2rem}
     .chart-sub{font-size:12px;color:var(--text-ter);margin-bottom:1.1rem}
     .chart-card img{width:100%;border-radius:6px;display:block;border:.5px solid var(--border)}
-    .chart-card iframe{width:100%;height:520px;border-radius:6px;display:block;border:.5px solid var(--border)}
+    .chart-card iframe{width:100%;border-radius:6px;display:block;border:.5px solid var(--border);min-height:400px}
 
     .chart-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:1.25rem 0 2rem}
     .chart-pair .chart-card{margin:0}
@@ -171,7 +171,7 @@
   <div class="chart-card">
     <div class="chart-title">Cited answer with retrieval transparency</div>
     <div class="chart-sub">Query: "How do I set up two-factor authentication on GitHub?" — 5 chunks retrieved, top match at 93% similarity.</div>
-    <iframe src="chat_rag.pdf" title="Chat interface showing a RAG answer about two-factor authentication with source citations and chunk retrieval panel" style="height:700px"></iframe>
+    <iframe src="chat_rag.pdf" title="Chat interface showing a RAG answer about two-factor authentication with source citations and chunk retrieval panel" ></iframe>
   </div>
 
   <hr/>
@@ -265,7 +265,7 @@
   <div class="chart-card">
     <div class="chart-title">Multi-turn ticket creation and lookup</div>
     <div class="chart-sub">Category → description → priority → confirm → ticket ID assigned. Follow-up lookup retrieves RAG-guided resolution steps.</div>
-    <iframe src="ticket_flow.pdf" title="Chat showing multi-turn support ticket creation flow ending with TKT-011 confirmation and a follow-up ticket lookup with RAG guidance" style="height:1500px"></iframe>
+    <iframe src="ticket_flow.pdf" title="Chat showing multi-turn support ticket creation flow ending with TKT-011 confirmation and a follow-up ticket lookup with RAG guidance" ></iframe>
   </div>
 
   <hr/>
@@ -277,7 +277,7 @@
   <div class="chart-card">
     <div class="chart-title">Registration, plan upgrade, and account listing</div>
     <div class="chart-sub">User 'lucy' not found → guided registration on Free plan → upgraded to Team → account list confirms all 6 registered users.</div>
-    <iframe src="crm.pdf" title="Chat showing full CRM workflow: billing check, new user registration, plan upgrade from Free to Team, and account listing" style="height:1500px"></iframe>
+    <iframe src="crm.pdf" title="Chat showing full CRM workflow: billing check, new user registration, plan upgrade from Free to Team, and account listing" ></iframe>
   </div>
 
   <hr/>
@@ -289,7 +289,7 @@
   <div class="chart-card">
     <div class="chart-title">Prompt injection block, out-of-scope redirect, and knowledge gap handling</div>
     <div class="chart-sub">Three guardrail scenarios in one session: injection attempt blocked, weather question redirected, future roadmap question returns honest uncertainty.</div>
-    <iframe src="guardrail.pdf" title="Chat showing three guardrail scenarios: blocked prompt injection, out-of-scope redirect for weather question, and graceful knowledge gap for GitHub roadmap question" style="height:1000px"></iframe>
+    <iframe src="guardrail.pdf" title="Chat showing three guardrail scenarios: blocked prompt injection, out-of-scope redirect for weather question, and graceful knowledge gap for GitHub roadmap question" ></iframe>
   </div>
 
   <hr/>
@@ -301,7 +301,7 @@
   <div class="chart-card">
     <div class="chart-title">Live analytics dashboard</div>
     <div class="chart-sub">94 total queries across a demo session: 31 knowledge queries, 8 tickets created, 4 blocked, average confidence 89.5%.</div>
-    <iframe src="analytics.pdf" title="Analytics dashboard showing query counts, intent distribution bar chart, and confidence over time line chart" style="height:1500px"></iframe>
+    <iframe src="analytics.pdf" title="Analytics dashboard showing query counts, intent distribution bar chart, and confidence over time line chart" ></iframe>
   </div>
 
   <hr/>
@@ -364,5 +364,27 @@
   </div>
 
 </main>
+
+<script>
+  /* Auto-size every PDF iframe to show all content without truncation */
+  function resizePdfIframes() {
+    document.querySelectorAll('iframe').forEach(function(iframe) {
+      /* For same-origin PDFs the browser renders them at a natural height.
+         We set a generous initial height based on the PDF page count encoded
+         in a data attribute, or fall back to 900px per page heuristic. */
+      var pages = parseInt(iframe.getAttribute('data-pages') || '1', 10);
+      iframe.style.height = (pages * 900) + 'px';
+    });
+  }
+  /* Set data-pages on each iframe */
+  var iframes = document.querySelectorAll('iframe');
+  var pageCounts = { 'chat_rag.pdf': 3, 'ticket_flow.pdf': 3, 'crm.pdf': 3, 'guardrail.pdf': 2, 'analytics.pdf': 3 };
+  iframes.forEach(function(f) {
+    var src = f.getAttribute('src');
+    var name = src ? src.split('/').pop() : '';
+    if (pageCounts[name]) f.setAttribute('data-pages', pageCounts[name]);
+  });
+  resizePdfIframes();
+</script>
 </body>
 </html>
