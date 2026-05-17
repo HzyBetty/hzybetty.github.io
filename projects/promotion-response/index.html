@@ -3,742 +3,329 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Conversational RAG Agent · Zhongyi Hu</title>
-
+  <title>Promotion Response Prediction · Portfolio</title>
+  <meta name="description" content="A LightGBM pipeline that predicts whether a retail customer will respond to a promotional offer, achieving 0.713 validation AUC." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap"
-    rel="stylesheet"
-  />
-
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@400&display=swap" rel="stylesheet" />
   <style>
-    *,*::before,*::after{
-      box-sizing:border-box;
-      margin:0;
-      padding:0;
-    }
-
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --bg:#FFFDF9;
-      --bg-card:#FFFFFF;
-      --bg-muted:#F7F4EF;
-
-      --text:#1C1A17;
-      --text-sec:#6B6559;
-      --text-ter:#A09890;
-
-      --border:rgba(60,50,30,0.11);
-      --border-md:rgba(60,50,30,0.22);
-
-      --amber-bg:#FAF0E8;
-      --amber:#EF9F27;
-      --amber-dark:#854F0B;
-      --amber-tag:#854F0B;
-
-      --green-bg:#EAF3DE;
-      --green-tag:#3B6D11;
-
-      --blue-bg:#E6F1FB;
-      --blue-tag:#185FA5;
-
-      --teal-bg:#E1F5EE;
-      --teal-tag:#0F6E56;
-
-      --purple-bg:#F0EDFB;
-      --purple-tag:#5B3DA8;
-
-      --red-bg:#FDECEA;
-      --red-tag:#B91C1C;
-
-      --r-md:8px;
-      --r-lg:14px;
+      --bg:#FFFDF9;--bg-card:#FFFFFF;--bg-muted:#F7F4EF;--bg-code:#F2EFE8;
+      --text:#1C1A17;--text-sec:#6B6559;--text-ter:#A09890;
+      --border:rgba(60,50,30,0.11);--border-md:rgba(60,50,30,0.22);
+      --amber-bg:#FAF0E8;--amber:#EF9F27;--amber-dark:#854F0B;--amber-tag:#854F0B;
+      --green-bg:#EAF3DE;--green-tag:#3B6D11;
+      --blue-bg:#E6F1FB;--blue-tag:#185FA5;
+      --teal-bg:#E1F5EE;--teal-tag:#0F6E56;
+      --purple-bg:#F0EDFB;--purple-tag:#5B3DA8;
+      --red-bg:#FDECEA;--red-tag:#B91C1C;
+      --r-md:8px;--r-lg:14px;
     }
+    @media(prefers-color-scheme:dark){:root{
+      --bg:#1A1714;--bg-card:#221F1B;--bg-muted:#2A2620;--bg-code:#252118;
+      --text:#F0EBE3;--text-sec:#A8A098;--text-ter:#6A6258;
+      --border:rgba(255,240,210,0.10);--border-md:rgba(255,240,210,0.20);
+      --amber-bg:#2E1F0A;--amber-tag:#FAC775;
+      --green-bg:#0E1F08;--green-tag:#C0DD97;
+      --blue-bg:#081828;--blue-tag:#85B7EB;
+      --teal-bg:#041F14;--teal-tag:#5DCAA5;
+      --purple-bg:#1A1230;--purple-tag:#A78BFA;
+      --red-bg:#2A0808;--red-tag:#FCA5A5;
+    }}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+    .wrap{max-width:740px;margin:0 auto;padding:2.5rem 1.75rem 5rem}
 
-    @media(prefers-color-scheme:dark){
-      :root{
-        --bg:#1A1714;
-        --bg-card:#221F1B;
-        --bg-muted:#2A2620;
+    .back{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text-ter);text-decoration:none;margin-bottom:2.25rem;transition:color .15s}
+    .back:hover{color:var(--text-sec)}
 
-        --text:#F0EBE3;
-        --text-sec:#A8A098;
-        --text-ter:#6A6258;
+    .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem}
+    .tag{font-size:10px;letter-spacing:.05em;font-weight:500;padding:3px 10px;border-radius:99px}
+    .tag-amber {background:var(--amber-bg);  color:var(--amber-tag)}
+    .tag-green {background:var(--green-bg);  color:var(--green-tag)}
+    .tag-blue  {background:var(--blue-bg);   color:var(--blue-tag)}
+    .tag-teal  {background:var(--teal-bg);   color:var(--teal-tag)}
+    .tag-purple{background:var(--purple-bg); color:var(--purple-tag)}
+    .tag-red   {background:var(--red-bg);    color:var(--red-tag)}
 
-        --border:rgba(255,240,210,0.10);
-        --border-md:rgba(255,240,210,0.20);
+    h1{font-family:'Lora',serif;font-size:clamp(22px,4vw,32px);font-weight:500;line-height:1.2;margin-bottom:.75rem}
+    .hero-sub{font-size:15.5px;color:var(--text-sec);font-weight:300;max-width:600px;margin-bottom:1.75rem}
 
-        --amber-bg:#2E1F0A;
-        --amber-tag:#FAC775;
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:2.5rem}
+    .stat{background:var(--bg-muted);border-radius:var(--r-md);padding:.9rem 1rem}
+    .stat-label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-ter);margin-bottom:.25rem}
+    .stat-val{font-size:22px;font-weight:500;color:var(--text)}
+    .stat-note{font-size:11px;color:var(--text-ter);margin-top:.1rem}
 
-        --green-bg:#0E1F08;
-        --green-tag:#C0DD97;
+    hr{border:none;border-top:.5px solid var(--border);margin:2.25rem 0}
 
-        --blue-bg:#081828;
-        --blue-tag:#85B7EB;
+    h2{font-family:'Lora',serif;font-size:19px;font-weight:500;margin-bottom:.6rem}
+    p{font-size:14.5px;color:var(--text-sec);margin-bottom:1rem;font-weight:300}
+    p:last-child{margin-bottom:0}
 
-        --teal-bg:#041F14;
-        --teal-tag:#5DCAA5;
+    .chart-card{background:var(--bg-card);border:.5px solid var(--border);border-radius:var(--r-lg);padding:1.5rem 1.5rem 1.25rem;margin:1.25rem 0 2rem}
+    .chart-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:.2rem}
+    .chart-sub{font-size:12px;color:var(--text-ter);margin-bottom:1.1rem}
+    .chart-card img{width:100%;border-radius:6px;display:block;border:.5px solid var(--border)}
 
-        --purple-bg:#1A1230;
-        --purple-tag:#A78BFA;
+    .chart-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:1.25rem 0 2rem}
+    .chart-pair .chart-card{margin:0}
+    @media(max-width:540px){.chart-pair{grid-template-columns:1fr}}
 
-        --red-bg:#2A0808;
-        --red-tag:#FCA5A5;
-      }
-    }
+    .pipeline{display:flex;flex-wrap:wrap;gap:10px;margin:1.25rem 0 2rem}
+    .pipe-step{background:var(--bg-card);border:.5px solid var(--border);border-radius:var(--r-md);padding:.7rem 1rem;flex:1;min-width:140px}
+    .pipe-num{font-size:10px;font-weight:500;letter-spacing:.06em;color:var(--amber-tag);margin-bottom:.25rem;text-transform:uppercase}
+    .pipe-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:.2rem}
+    .pipe-desc{font-size:11.5px;color:var(--text-sec);line-height:1.5}
 
-    body{
-      font-family:'DM Sans',sans-serif;
-      background:var(--bg);
-      color:var(--text);
-      line-height:1.7;
-    }
+    .cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:1.25rem 0 2rem}
+    .cap-card{background:var(--bg-card);border:.5px solid var(--border);border-radius:var(--r-md);padding:.85rem 1rem}
+    .cap-title{font-size:12.5px;font-weight:500;color:var(--text);margin-bottom:.25rem}
+    .cap-desc{font-size:11.5px;color:var(--text-sec);line-height:1.5}
 
-    .wrap{
-      max-width:760px;
-      margin:0 auto;
-      padding:2.5rem 1.75rem 5rem;
-    }
+    .res-table{width:100%;border-collapse:collapse;font-size:13px;margin:1rem 0 1.5rem}
+    .res-table th{text-align:left;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-ter);padding:.5rem .75rem;border-bottom:.5px solid var(--border-md)}
+    .res-table td{padding:.6rem .75rem;border-bottom:.5px solid var(--border);color:var(--text-sec)}
+    .res-table tr:last-child td{border-bottom:none}
+    .res-table .highlight td{color:var(--text);font-weight:500}
+    .good{color:var(--green-tag);font-weight:500}
+    .warn{color:var(--amber-tag);font-weight:500}
 
-    .back{
-      display:inline-flex;
-      align-items:center;
-      gap:5px;
-      font-size:13px;
-      color:var(--text-ter);
-      text-decoration:none;
-      margin-bottom:2.25rem;
-      transition:color .15s;
-    }
+    .callout{background:var(--amber-bg);border-left:3px solid var(--amber);border-radius:0 var(--r-md) var(--r-md) 0;padding:1rem 1.1rem;margin:1.25rem 0 2rem}
+    .callout p{color:var(--amber-dark);font-size:13.5px;margin:0}
+    @media(prefers-color-scheme:dark){.callout p{color:var(--amber-tag)}}
 
-    .back:hover{
-      color:var(--text-sec);
-    }
+    .stack-row{display:flex;flex-wrap:wrap;gap:8px;margin:1rem 0 2rem}
+    .stack-badge{font-size:11.5px;font-weight:400;padding:4px 12px;border-radius:6px;border:.5px solid var(--border-md);color:var(--text-sec);background:var(--bg-card)}
 
-    .tags{
-      display:flex;
-      flex-wrap:wrap;
-      gap:6px;
-      margin-bottom:1rem;
-    }
+    .proj-footer{margin-top:3rem;padding-top:1.5rem;border-top:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem}
+    .proj-footer a{font-size:13px;color:var(--text-sec);text-decoration:none;display:flex;align-items:center;gap:5px}
+    .proj-footer a:hover{color:var(--text)}
 
-    .tag{
-      font-size:10px;
-      letter-spacing:.05em;
-      font-weight:500;
-      padding:3px 10px;
-      border-radius:99px;
-    }
-
-    .tag-amber {background:var(--amber-bg);color:var(--amber-tag);}
-    .tag-green {background:var(--green-bg);color:var(--green-tag);}
-    .tag-blue  {background:var(--blue-bg);color:var(--blue-tag);}
-    .tag-teal  {background:var(--teal-bg);color:var(--teal-tag);}
-    .tag-purple{background:var(--purple-bg);color:var(--purple-tag);}
-    .tag-red   {background:var(--red-bg);color:var(--red-tag);}
-
-    h1{
-      font-family:'Lora',serif;
-      font-size:clamp(24px,4vw,34px);
-      font-weight:500;
-      line-height:1.2;
-      margin-bottom:.75rem;
-    }
-
-    .hero-sub{
-      font-size:15.5px;
-      color:var(--text-sec);
-      font-weight:300;
-      max-width:620px;
-      margin-bottom:1.75rem;
-    }
-
-    .stats{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
-      gap:12px;
-      margin-bottom:2.5rem;
-    }
-
-    .stat{
-      background:var(--bg-muted);
-      border-radius:var(--r-md);
-      padding:.9rem 1rem;
-    }
-
-    .stat-label{
-      font-size:11px;
-      letter-spacing:.06em;
-      text-transform:uppercase;
-      color:var(--text-ter);
-      margin-bottom:.25rem;
-    }
-
-    .stat-val{
-      font-size:22px;
-      font-weight:500;
-      color:var(--text);
-    }
-
-    .stat-note{
-      font-size:11px;
-      color:var(--text-ter);
-      margin-top:.1rem;
-    }
-
-    hr{
-      border:none;
-      border-top:.5px solid var(--border);
-      margin:2.25rem 0;
-    }
-
-    h2{
-      font-family:'Lora',serif;
-      font-size:20px;
-      font-weight:500;
-      margin-bottom:.6rem;
-    }
-
-    p{
-      font-size:14.5px;
-      color:var(--text-sec);
-      margin-bottom:1rem;
-      font-weight:300;
-    }
-
-    .chart-card{
-      background:var(--bg-card);
-      border:.5px solid var(--border);
-      border-radius:var(--r-lg);
-      padding:1.5rem;
-      margin:1.25rem 0 2rem;
-    }
-
-    .chart-title{
-      font-size:13px;
-      font-weight:500;
-      color:var(--text);
-      margin-bottom:.2rem;
-    }
-
-    .chart-sub{
-      font-size:12px;
-      color:var(--text-ter);
-      margin-bottom:1.1rem;
-    }
-
-    iframe{
-      width:100%;
-      min-height:500px;
-      border:none;
-      border-radius:8px;
-    }
-
-    /* ---------- ARCHITECTURE ---------- */
-
-    .arch-diagram{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:14px;
-      margin:2rem 0;
-    }
-
-    .arch-node{
-      background:var(--bg-card);
-      border:.5px solid var(--border);
-      border-radius:14px;
-      padding:1rem 1.25rem;
-      width:min(100%,440px);
-      text-align:center;
-      box-shadow:0 2px 10px rgba(0,0,0,.03);
-    }
-
-    .arch-node strong{
-      display:block;
-      font-size:14px;
-      font-weight:500;
-      color:var(--text);
-      margin-bottom:.2rem;
-    }
-
-    .arch-node span{
-      font-size:12px;
-      color:var(--text-sec);
-    }
-
-    .arch-arrow{
-      font-size:18px;
-      color:var(--text-ter);
-      line-height:1;
-    }
-
-    .arch-group{
-      width:100%;
-      max-width:580px;
-
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-      gap:12px;
-    }
-
-    .arch-handler{
-      background:var(--bg-muted);
-      border:.5px solid var(--border);
-      border-radius:12px;
-      padding:.9rem .8rem;
-      text-align:center;
-    }
-
-    .arch-handler-title{
-      font-size:13px;
-      font-weight:500;
-      color:var(--text);
-      margin-bottom:.25rem;
-    }
-
-    .arch-handler-desc{
-      font-size:11.5px;
-      line-height:1.5;
-      color:var(--text-sec);
-    }
-
-    .pipeline{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      margin:1.5rem 0 2rem;
-    }
-
-    .pipe-step{
-      background:var(--bg-card);
-      border:.5px solid var(--border);
-      border-radius:var(--r-md);
-      padding:.8rem 1rem;
-      flex:1;
-      min-width:150px;
-    }
-
-    .pipe-num{
-      font-size:10px;
-      font-weight:500;
-      letter-spacing:.06em;
-      color:var(--amber-tag);
-      margin-bottom:.25rem;
-      text-transform:uppercase;
-    }
-
-    .pipe-name{
-      font-size:13px;
-      font-weight:500;
-      color:var(--text);
-      margin-bottom:.2rem;
-    }
-
-    .pipe-desc{
-      font-size:11.5px;
-      color:var(--text-sec);
-      line-height:1.5;
-    }
-
-    .cap-grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
-      gap:12px;
-      margin:1.25rem 0 2rem;
-    }
-
-    .cap-card{
-      background:var(--bg-card);
-      border:.5px solid var(--border);
-      border-radius:var(--r-md);
-      padding:.9rem 1rem;
-    }
-
-    .cap-icon{
-      font-size:16px;
-      margin-bottom:.35rem;
-    }
-
-    .cap-title{
-      font-size:12.5px;
-      font-weight:500;
-      color:var(--text);
-      margin-bottom:.25rem;
-    }
-
-    .cap-desc{
-      font-size:11.5px;
-      color:var(--text-sec);
-      line-height:1.5;
-    }
-
-    .stack-row{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin:1rem 0 2rem;
-    }
-
-    .stack-badge{
-      font-size:11.5px;
-      padding:4px 12px;
-      border-radius:6px;
-      border:.5px solid var(--border-md);
-      background:var(--bg-card);
-      color:var(--text-sec);
-    }
-
-    .proj-footer{
-      margin-top:3rem;
-      padding-top:1.5rem;
-      border-top:.5px solid var(--border);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      flex-wrap:wrap;
-      gap:.75rem;
-    }
-
-    .proj-footer a{
-      font-size:13px;
-      color:var(--text-sec);
-      text-decoration:none;
-    }
-
-    .proj-footer a:hover{
-      color:var(--text);
-    }
-
-    @media(max-width:480px){
-
-      .wrap{
-        padding:2rem 1.1rem 4rem;
-      }
-
-      .stats{
-        grid-template-columns:1fr 1fr;
-      }
-
-      .arch-group{
-        grid-template-columns:1fr;
-      }
-    }
+    @media(max-width:480px){.wrap{padding:2rem 1.1rem 4rem}.stats{grid-template-columns:1fr 1fr}}
   </style>
 </head>
-
 <body>
-
 <main class="wrap">
 
-  <a class="back" href="../../index.html">
-    ← Back to projects
-  </a>
+  <a class="back" href="../index.html">← Back to projects</a>
 
   <!-- HERO -->
-
   <div class="tags">
-    <span class="tag tag-blue">RAG</span>
-    <span class="tag tag-green">LLM Agent</span>
-    <span class="tag tag-amber">ChromaDB</span>
-    <span class="tag tag-teal">NLP</span>
-    <span class="tag tag-purple">Streamlit</span>
-    <span class="tag tag-red">Guardrails</span>
+    <span class="tag tag-blue">Binary Classification</span>
+    <span class="tag tag-amber">LightGBM</span>
+    <span class="tag tag-green">Feature Engineering</span>
+    <span class="tag tag-teal">SHAP</span>
+    <span class="tag tag-purple">Retail Analytics</span>
   </div>
-
-  <h1>Conversational RAG Agent</h1>
-
-  <p class="hero-sub">
-    A multi-capability GitHub documentation assistant built with retrieval-augmented generation. Routes user intent across knowledge Q&amp;A, support tickets, CRM operations, and safety guardrails — all in a single conversational interface.
-  </p>
+  <h1>Promotion Response Prediction</h1>
+  <p class="hero-sub">A machine learning pipeline that predicts which retail customers are most likely to respond to a promotional offer — enabling smarter campaign targeting, reduced marketing waste, and higher ROI.</p>
 
   <div class="stats">
-
     <div class="stat">
-      <div class="stat-label">Baseline tests</div>
-      <div class="stat-val">15/15</div>
-      <div class="stat-note">All passed</div>
+      <div class="stat-label">Validation AUC</div>
+      <div class="stat-val">0.713</div>
+      <div class="stat-note">Held-out 20% split</div>
     </div>
-
     <div class="stat">
-      <div class="stat-label">Intent accuracy</div>
-      <div class="stat-val">100%</div>
-      <div class="stat-note">64 stress cases</div>
+      <div class="stat-label">Training AUC</div>
+      <div class="stat-val">0.875</div>
+      <div class="stat-note">80% stratified split</div>
     </div>
-
     <div class="stat">
-      <div class="stat-label">RAG support rate</div>
-      <div class="stat-val">~98%</div>
-      <div class="stat-note">Latest stress run</div>
+      <div class="stat-label">Features built</div>
+      <div class="stat-val">50+</div>
+      <div class="stat-note">Across 6 dimensions</div>
     </div>
-
     <div class="stat">
-      <div class="stat-label">Avg confidence</div>
-      <div class="stat-val">89.5%</div>
-      <div class="stat-note">Live telemetry</div>
+      <div class="stat-label">Dataset size</div>
+      <div class="stat-val">313 MB</div>
+      <div class="stat-note">Transaction history</div>
     </div>
-
   </div>
 
   <hr/>
 
-  <!-- PROBLEM -->
+  <!-- SECTION 1 -->
+  <h2>The business problem</h2>
+  <p>Retailers send thousands of promotional offers every week. Most go unnoticed — not because customers don't want deals, but because the right offer isn't reaching the right person. Blanket campaigns are expensive and wasteful. The opportunity is in precision: identify, before a campaign launches, which customers are most likely to convert.</p>
+  <p>This project uses historical transaction data to score each customer's probability of responding to a given promotion. By ranking customers ahead of time, marketing teams can concentrate spend on high-propensity shoppers — improving both response rates and return on ad spend without changing the offer itself.</p>
 
-  <h2>The problem</h2>
-
-  <p>
-    GitHub's documentation is vast and fragmented. Users spend unnecessary time navigating support articles for routine workflows such as enabling 2FA, managing billing, or troubleshooting repositories.
-  </p>
-
-  <p>
-    This project consolidates those workflows into a single conversational assistant capable of grounded documentation Q&amp;A, ticket operations, CRM workflows, and safety guardrails — all backed by persistent storage and retrieval transparency.
-  </p>
-
-  <hr/>
-
-  <!-- RAG -->
-
-  <h2>RAG knowledge Q&amp;A</h2>
-
-  <p>
-    User questions are routed to a vector retriever backed by scraped GitHub documentation. Retrieved chunks are passed into Llama 3.1 through Groq's API, and generated responses include inline citations to source URLs.
-  </p>
-
-  <div class="chart-card">
-
-    <div class="chart-title">
-      Cited answer with retrieval transparency
-    </div>
-
-    <div class="chart-sub">
-      Query: "How do I set up two-factor authentication on GitHub?"
-    </div>
-
-    <iframe src="chat_rag.pdf"></iframe>
-
+  <div class="callout">
+    <p><strong>Key design constraint:</strong> all features are computed strictly from transactions that occurred <em>before</em> each promotion date. This temporal leakage prevention ensures the model reflects realistic deployment conditions rather than accidentally learning from the future.</p>
   </div>
 
   <hr/>
 
-  <!-- ARCHITECTURE -->
-
-  <h2>Architecture</h2>
-
-  <p>
-    Every incoming message passes through an intent router that combines regex pattern matching with LLM fallback classification. Requests are dispatched to isolated capability handlers while sharing a common persistence and memory layer.
-  </p>
-
-  <div class="arch-diagram">
-
-    <div class="arch-node">
-      <strong>User Input</strong>
-      <span>Text or voice interactions</span>
-    </div>
-
-    <div class="arch-arrow">↓</div>
-
-    <div class="arch-node">
-      <strong>Intent Router</strong>
-      <span>Regex-first classification with LLM fallback</span>
-    </div>
-
-    <div class="arch-arrow">↓</div>
-
-    <div class="arch-group">
-
-      <div class="arch-handler">
-        <div class="arch-handler-title">🔍 Knowledge Q&amp;A</div>
-        <div class="arch-handler-desc">
-          Retrieval-augmented documentation answers with citations
-        </div>
-      </div>
-
-      <div class="arch-handler">
-        <div class="arch-handler-title">🎫 Ticket Operations</div>
-        <div class="arch-handler-desc">
-          Create, check, and close support tickets
-        </div>
-      </div>
-
-      <div class="arch-handler">
-        <div class="arch-handler-title">👤 CRM Workflows</div>
-        <div class="arch-handler-desc">
-          Registration, billing checks, and account management
-        </div>
-      </div>
-
-      <div class="arch-handler">
-        <div class="arch-handler-title">⚡ Plan Upgrades</div>
-        <div class="arch-handler-desc">
-          Persistent subscription changes stored in SQLite
-        </div>
-      </div>
-
-      <div class="arch-handler">
-        <div class="arch-handler-title">🚫 Guardrails</div>
-        <div class="arch-handler-desc">
-          Prompt injection and out-of-scope protection
-        </div>
-      </div>
-
-      <div class="arch-handler">
-        <div class="arch-handler-title">🎙️ Voice Mode</div>
-        <div class="arch-handler-desc">
-          SpeechRecognition input with spoken responses
-        </div>
-      </div>
-
-    </div>
-
-    <div class="arch-arrow">↓</div>
-
-    <div class="arch-node">
-      <strong>Shared Infrastructure</strong>
-      <span>ChromaDB · SQLite · Groq API · Session Memory</span>
-    </div>
-
-    <div class="arch-arrow">↓</div>
-
-    <div class="arch-node">
-      <strong>Streamlit Interface</strong>
-      <span>Interactive chat UI + analytics dashboard</span>
-    </div>
-
-  </div>
+  <!-- SECTION 2 -->
+  <h2>The data</h2>
+  <p>The dataset covers real retail transaction history (~313 MB). March 2013 promotions with observed response labels form the training set; April 2013 promotions without labels form the test set. The task is binary: did the customer respond to the promotion (1) or not (0)?</p>
 
   <div class="pipeline">
-
     <div class="pipe-step">
-      <div class="pipe-num">Layer 01</div>
-      <div class="pipe-name">Ingestion</div>
-      <div class="pipe-desc">
-        GitHub docs scraped, chunked, and embedded into ChromaDB
-      </div>
+      <div class="pipe-num">File 01</div>
+      <div class="pipe-name">transactions.parquet</div>
+      <div class="pipe-desc">Historical customer purchases — product, quantity, spend, and date</div>
     </div>
-
     <div class="pipe-step">
-      <div class="pipe-num">Layer 02</div>
-      <div class="pipe-name">Routing</div>
-      <div class="pipe-desc">
-        Regex intent detection with LLM fallback classification
-      </div>
+      <div class="pipe-num">File 02</div>
+      <div class="pipe-name">promos.parquet</div>
+      <div class="pipe-desc">Promotion metadata — category, brand, manufacturer, offer value</div>
     </div>
-
     <div class="pipe-step">
-      <div class="pipe-num">Layer 03</div>
-      <div class="pipe-name">Generation</div>
-      <div class="pipe-desc">
-        Retrieved chunks passed to Llama 3.1 with cited responses
-      </div>
+      <div class="pipe-num">File 03</div>
+      <div class="pipe-name">train_history.parquet</div>
+      <div class="pipe-desc">March 2013 promotions with observed response labels for training</div>
     </div>
-
     <div class="pipe-step">
-      <div class="pipe-num">Layer 04</div>
-      <div class="pipe-name">Persistence</div>
-      <div class="pipe-desc">
-        SQLite stores tickets, accounts, and session history
-      </div>
+      <div class="pipe-num">File 04</div>
+      <div class="pipe-name">test_history.parquet</div>
+      <div class="pipe-desc">April 2013 promotions without labels — the prediction target</div>
     </div>
-
   </div>
 
   <hr/>
 
-  <!-- CAPABILITIES -->
-
-  <h2>Capabilities</h2>
+  <!-- SECTION 3 -->
+  <h2>Feature engineering</h2>
+  <p>Over 50 features were engineered to capture distinct angles of customer behaviour. The goal: give the model enough signal to distinguish a habitual brand loyalist from a casual one-time shopper before the promotion even goes out.</p>
 
   <div class="cap-grid">
-
     <div class="cap-card">
-      <div class="cap-icon">🔍</div>
-      <div class="cap-title">Knowledge Q&amp;A</div>
-      <div class="cap-desc">
-        Grounded RAG answers with citations and chunk scores
-      </div>
+      <div class="cap-title">RFM behaviour</div>
+      <div class="cap-desc">Recency, frequency, and monetary signals at overall, brand, category, and manufacturer levels. Coefficient of variation captures spending volatility.</div>
     </div>
-
     <div class="cap-card">
-      <div class="cap-icon">🎫</div>
-      <div class="cap-title">Support Tickets</div>
-      <div class="cap-desc">
-        Multi-turn ticket creation and lifecycle management
-      </div>
+      <div class="cap-title">Brand &amp; category affinity</div>
+      <div class="cap-desc">Brand loyalty scores, spend share within category, purchase diversity metrics, and cumulative brand transaction counts.</div>
     </div>
-
     <div class="cap-card">
-      <div class="cap-icon">👤</div>
-      <div class="cap-title">User Registration</div>
-      <div class="cap-desc">
-        Guided onboarding with plan selection workflows
-      </div>
+      <div class="cap-title">Store-level context</div>
+      <div class="cap-desc">Customer–store affinity ratios normalised against store-level baselines. Historical response rates at store and category level.</div>
     </div>
-
     <div class="cap-card">
-      <div class="cap-icon">💳</div>
-      <div class="cap-title">Billing Checker</div>
-      <div class="cap-desc">
-        Account lookup and subscription retrieval
-      </div>
+      <div class="cap-title">Price sensitivity</div>
+      <div class="cap-desc">Promotion value and quantity relative to the customer's historical averages — does this deal represent unusual value for them?</div>
     </div>
-
     <div class="cap-card">
-      <div class="cap-icon">⚡</div>
-      <div class="cap-title">Plan Upgrades</div>
-      <div class="cap-desc">
-        Real-time subscription updates persisted in SQLite
-      </div>
+      <div class="cap-title">Temporal signals</div>
+      <div class="cap-desc">Day-of-week purchase counts for each weekday, month indicators, and a weekend shopper flag derived from historical patterns.</div>
     </div>
-
     <div class="cap-card">
-      <div class="cap-icon">🚫</div>
-      <div class="cap-title">Guardrails</div>
-      <div class="cap-desc">
-        Prompt injection detection and safe refusal handling
-      </div>
+      <div class="cap-title">Competitive pressure</div>
+      <div class="cap-desc">Count of competing promotions in the same store and category over a rolling 30-day window. Manufacturer-level recency signals.</div>
     </div>
+  </div>
 
+  <p>High-cardinality categoricals — customer ID, store, brand, category, manufacturer — were encoded with Bayesian-smoothed target encoding, preserving predictive signal while preventing overfitting on rare categories.</p>
+
+  <hr/>
+
+  <!-- SECTION 4 -->
+  <h2>Model performance</h2>
+  <p>LightGBM was selected for its strong performance on tabular data with mixed feature types. Hyperparameters were tuned via grid search; early stopping with a 50-round patience window guarded against over-training. The final model was evaluated on a stratified 80/20 split.</p>
+
+  <table class="res-table">
+    <thead><tr><th>Split</th><th>AUC</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr class="highlight"><td>Training</td><td class="good">0.8751</td><td>80% stratified sample</td></tr>
+      <tr class="highlight"><td>Validation</td><td class="good">0.7134</td><td>Held-out 20% — primary optimisation metric</td></tr>
+      <tr><td>Gap</td><td class="warn">0.162</td><td>Expected with large feature sets; accepted in favour of retaining signal</td></tr>
+    </tbody>
+  </table>
+
+  <div class="chart-pair">
+    <div class="chart-card">
+      <div class="chart-title">ROC curve — validation set</div>
+      <div class="chart-sub">The curve sits well above the diagonal at all thresholds — genuine discriminative power, especially at low false positive rates where campaign precision matters most.</div>
+      <img src="roc_curve.png" alt="ROC curve showing AUC of 0.713 on the validation set" />
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Predicted probability distribution</div>
+      <div class="chart-sub">Non-responders cluster tightly below 0.10. Responders spread further right with a mode around 0.20–0.25 — the model is picking up a genuine behavioural signal.</div>
+      <img src="score_distribution.png" alt="Predicted probability distribution separated by true label" />
+    </div>
+  </div>
+
+  <p>The score distribution confirms meaningful class separation. Targeting the top 30% of scored customers would capture a significantly higher share of actual responders than random selection — the direct business value of a well-calibrated response model.</p>
+
+  <hr/>
+
+  <!-- SECTION 5 -->
+  <h2>What drove the predictions</h2>
+  <p>Feature importance by LightGBM split count reveals which variables the model reached for most often. Day-of-week purchase counts dominate — not because shopping day is causally important, but because it acts as a proxy for overall engagement intensity. A customer who visits across multiple weekdays consistently is a more habitual buyer, and habitual buyers respond to promotions.</p>
+
+  <div class="chart-card">
+    <div class="chart-title">Top 20 feature importances</div>
+    <div class="chart-sub">Ranked by LightGBM split count. Day-of-week counts lead, followed by spending variability, average order value, brand diversity, and promotion value relative to the customer's own spending baseline.</div>
+    <img src="feature_importance.png" alt="Top 20 feature importances by LightGBM split count" />
+  </div>
+
+  <div class="callout">
+    <p><strong>Feature pruning was attempted but abandoned.</strong> Removing low-importance variables based on split counts did not improve validation AUC. All 50+ features were retained — a pragmatic trade-off between model simplicity and keeping marginal signal.</p>
   </div>
 
   <hr/>
 
-  <!-- TECH STACK -->
+  <!-- SECTION 6 -->
+  <h2>Understanding individual predictions</h2>
+  <p>SHAP values show not just which features matter, but in which direction and for whom. Each dot in the beeswarm plot is one validation customer — red for high feature values, blue for low. Right of centre pushed the predicted probability up; left pushed it down.</p>
 
+  <div class="chart-card">
+    <div class="chart-title">SHAP summary — validation set</div>
+    <div class="chart-sub">Historical response rates at promotion, store, and category level emerge as the strongest drivers of actual prediction movement. Customers who responded to similar promotions before are far more likely to respond again.</div>
+    <img src="shap_summary.png" alt="SHAP beeswarm plot showing feature impact direction and magnitude across the validation set" />
+  </div>
+
+  <p>The SHAP plot tells a cleaner business story than split-count importance. Behavioural persistence — prior response rates — dominates actual score movement. Day-of-week features, which topped the split-count ranking, show tight SHAP distributions around zero: used often by the model, but rarely the deciding factor for individual customers.</p>
+
+  <div class="chart-card">
+    <div class="chart-title">SHAP waterfall — highest-scored customer</div>
+    <div class="chart-sub">Starting from the dataset average (E[f(x)] = −2.028), each feature pushes the prediction up or down. This customer's 33.5% item response rate contributes +4.27 on its own — more than all other features combined.</div>
+    <img src="shap_waterfall.png" alt="SHAP waterfall plot for the highest-scored customer in the validation set" />
+  </div>
+
+  <p>This customer has a 33.5% historical item response rate — roughly three times the population average — combined with a strong personal promo response rate and a high store-level response rate. Every signal points the same way. The model scores them at f(x) = 3.159: a near-certain converter, and exactly the kind of customer a well-targeted campaign should prioritise.</p>
+
+  <hr/>
+
+  <!-- SECTION 7 -->
   <h2>Tech stack</h2>
+  <p>The full pipeline from feature engineering to model training and SHAP interpretability runs in a single Jupyter notebook, reproducible on Google Colab in under 10 minutes with no local setup required.</p>
 
   <div class="stack-row">
-
-    <span class="stack-badge">Llama-3.1-8b-instant</span>
-    <span class="stack-badge">Groq API</span>
-    <span class="stack-badge">ChromaDB</span>
-    <span class="stack-badge">SQLite</span>
-    <span class="stack-badge">Streamlit</span>
-    <span class="stack-badge">Sentence Transformers</span>
-    <span class="stack-badge">SpeechRecognition</span>
-    <span class="stack-badge">pyttsx3</span>
-    <span class="stack-badge">Pydantic</span>
-
+    <span class="stack-badge">LightGBM</span>
+    <span class="stack-badge">SHAP</span>
+    <span class="stack-badge">pandas</span>
+    <span class="stack-badge">scikit-learn</span>
+    <span class="stack-badge">NumPy</span>
+    <span class="stack-badge">matplotlib</span>
+    <span class="stack-badge">pyarrow</span>
+    <span class="stack-badge">Google Colab</span>
   </div>
 
   <hr/>
 
-  <!-- FOOTER -->
+  <!-- SECTION 8 -->
+  <h2>Future directions</h2>
+  <p>A validation AUC of 0.713 is a solid baseline for campaign prioritisation, but several directions could push performance further and make the model more actionable in production:</p>
+
+  <ul style="font-size:14px;color:var(--text-sec);font-weight:300;padding-left:1.25rem;line-height:2.2">
+    <li>Rolling temporal features — trend and seasonality signals over 60/90-day windows to detect whether a customer is becoming more or less engaged</li>
+    <li>Customer cohort segmentation — separate models per RFM tier (high-value, at-risk, lapsed) for better calibration within each segment</li>
+    <li>Ensemble stacking — combine LightGBM with a calibrated logistic regression to reduce overfitting and improve probability estimates</li>
+    <li>SHAP-based feature selection — use mean absolute SHAP values as the pruning criterion, which is more stable than split counts</li>
+    <li>Threshold optimisation — tune the decision threshold against the actual business cost of false positives vs false negatives, rather than defaulting to 0.5</li>
+  </ul>
 
   <div class="proj-footer">
-
-    <a href="../../index.html">
-      ← All projects
-    </a>
-
-    <a href="https://github.com/HzyBetty" target="_blank">
+    <a href="../index.html">← All projects</a>
+    <a href="https://github.com" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
       View on GitHub
     </a>
-
   </div>
 
 </main>
-
 </body>
 </html>
