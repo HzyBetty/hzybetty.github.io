@@ -68,6 +68,7 @@
     .chart-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:.2rem}
     .chart-sub{font-size:12px;color:var(--text-ter);margin-bottom:1.1rem}
     .chart-card img{width:100%;border-radius:6px;display:block;border:.5px solid var(--border)}
+    .chart-card iframe{width:100%;height:520px;border-radius:6px;display:block;border:.5px solid var(--border)}
 
     .chart-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:1.25rem 0 2rem}
     .chart-pair .chart-card{margin:0}
@@ -170,7 +171,7 @@
   <div class="chart-card">
     <div class="chart-title">Cited answer with retrieval transparency</div>
     <div class="chart-sub">Query: "How do I set up two-factor authentication on GitHub?" — 5 chunks retrieved, top match at 93% similarity.</div>
-    <img src="chat_rag.png" alt="Chat interface showing a RAG answer about two-factor authentication with source citations and chunk retrieval panel" />
+    <iframe src="chat_rag.pdf" title="Chat interface showing a RAG answer about two-factor authentication with source citations and chunk retrieval panel"></iframe>
   </div>
 
   <hr/>
@@ -305,7 +306,7 @@
   <div class="chart-card">
     <div class="chart-title">Multi-turn ticket creation and lookup</div>
     <div class="chart-sub">Category → description → priority → confirm → ticket ID assigned. Follow-up lookup retrieves RAG-guided resolution steps.</div>
-    <img src="ticket_flow.png" alt="Chat showing multi-turn support ticket creation flow ending with TKT-011 confirmation and a follow-up ticket lookup with RAG guidance" />
+    <iframe src="ticket_flow.pdf" title="Chat showing multi-turn support ticket creation flow ending with TKT-011 confirmation and a follow-up ticket lookup with RAG guidance"></iframe>
   </div>
 
   <hr/>
@@ -317,7 +318,7 @@
   <div class="chart-card">
     <div class="chart-title">Registration, plan upgrade, and account listing</div>
     <div class="chart-sub">User 'lucy' not found → guided registration on Free plan → upgraded to Team → account list confirms all 6 registered users.</div>
-    <img src="crm.png" alt="Chat showing full CRM workflow: billing check, new user registration, plan upgrade from Free to Team, and account listing" />
+    <iframe src="crm.pdf" title="Chat showing full CRM workflow: billing check, new user registration, plan upgrade from Free to Team, and account listing"></iframe>
   </div>
 
   <hr/>
@@ -329,7 +330,7 @@
   <div class="chart-card">
     <div class="chart-title">Prompt injection block, out-of-scope redirect, and knowledge gap handling</div>
     <div class="chart-sub">Three guardrail scenarios in one session: injection attempt blocked, weather question redirected, future roadmap question returns honest uncertainty.</div>
-    <img src="guardrail.png" alt="Chat showing three guardrail scenarios: blocked prompt injection, out-of-scope redirect for weather question, and graceful knowledge gap for GitHub roadmap question" />
+    <iframe src="guardrail.pdf" title="Chat showing three guardrail scenarios: blocked prompt injection, out-of-scope redirect for weather question, and graceful knowledge gap for GitHub roadmap question"></iframe>
   </div>
 
   <hr/>
@@ -341,7 +342,7 @@
   <div class="chart-card">
     <div class="chart-title">Live analytics dashboard</div>
     <div class="chart-sub">94 total queries across a demo session: 31 knowledge queries, 8 tickets created, 4 blocked, average confidence 89.5%.</div>
-    <img src="analytics.png" alt="Analytics dashboard showing query counts, intent distribution bar chart, and confidence over time line chart" />
+    <iframe src="analytics.pdf" title="Analytics dashboard showing query counts, intent distribution bar chart, and confidence over time line chart"></iframe>
   </div>
 
   <hr/>
