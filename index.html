@@ -29,6 +29,8 @@
       --green-tag: #3B6D11;
       --blue-bg:   #E6F1FB;
       --blue-tag:  #185FA5;
+      --purple-bg: #F0EDFB;
+      --purple-tag:#5B3DA8;
       --amber-bar1:#EF9F27;
       --amber-bar2:#BA7517;
       --amber-bar3:#854F0B;
@@ -54,6 +56,8 @@
         --green-tag: #C0DD97;
         --blue-bg:   #081828;
         --blue-tag:  #85B7EB;
+        --purple-bg: #1A1230;
+        --purple-tag:#A78BFA;
       }
     }
 
@@ -71,7 +75,6 @@
       padding: 3.5rem 2rem 4rem;
     }
 
-    /* ── Header ── */
     .greeting {
       font-size: 11px;
       letter-spacing: 0.1em;
@@ -109,14 +112,12 @@
       margin-bottom: 1.25rem;
     }
 
-    /* ── Grid ── */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
       gap: 16px;
     }
 
-    /* ── Card ── */
     .card {
       background: var(--bg-card);
       border: 0.5px solid var(--border);
@@ -147,6 +148,7 @@
     }
 
     .thumb-promo  { background: var(--amber-bg); }
+    .thumb-rag    { background: var(--blue-bg); }
     .thumb-muted  { background: var(--bg-muted); }
 
     .card-body {
@@ -168,10 +170,11 @@
       border-radius: 99px;
     }
 
-    .tag-amber { background: var(--amber-bg); color: var(--amber-tag); }
-    .tag-green { background: var(--green-bg); color: var(--green-tag); }
-    .tag-blue  { background: var(--blue-bg);  color: var(--blue-tag);  }
-    .tag-muted { background: var(--bg-muted); color: var(--text-ter);  }
+    .tag-amber  { background: var(--amber-bg);  color: var(--amber-tag); }
+    .tag-green  { background: var(--green-bg);  color: var(--green-tag); }
+    .tag-blue   { background: var(--blue-bg);   color: var(--blue-tag);  }
+    .tag-purple { background: var(--purple-bg); color: var(--purple-tag);}
+    .tag-muted  { background: var(--bg-muted);  color: var(--text-ter);  }
 
     .card-title {
       font-family: 'Lora', serif;
@@ -209,7 +212,6 @@
 
     .card:hover .card-arrow { transform: translateX(3px); color: var(--text-sec); }
 
-    /* ── Footer ── */
     .footer {
       margin-top: 2.5rem;
       padding-top: 1.25rem;
@@ -222,7 +224,6 @@
     }
 
     .footer-note { font-size: 12px; color: var(--text-ter); }
-
     .footer-links { display: flex; gap: 18px; }
 
     .footer-link {
@@ -236,7 +237,6 @@
 
     .footer-link:hover { color: var(--text); }
 
-    /* ── SVG icon helpers ── */
     svg { display: block; }
 
     @media (max-width: 480px) {
@@ -290,26 +290,39 @@
       </div>
     </a>
 
-    <!-- ── PLACEHOLDER 2 ── -->
-    <div class="card placeholder">
-      <div class="thumb thumb-muted">
-        <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <rect x="4"  y="4"  width="20" height="20" rx="3" stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.4"/>
-          <rect x="28" y="4"  width="20" height="20" rx="3" stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.4"/>
-          <rect x="4"  y="28" width="20" height="20" rx="3" stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.4"/>
-          <rect x="28" y="28" width="20" height="20" rx="3" stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.4"/>
+    <!-- ── PROJECT 2: Conversational RAG Agent ── -->
+    <a class="card" href="projects/conversational-rag-agent/index.html">
+      <div class="thumb thumb-rag">
+        <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- Chat bubbles -->
+          <rect x="8" y="10" width="36" height="18" rx="5" fill="#185FA5" opacity="0.18"/>
+          <rect x="8" y="10" width="36" height="18" rx="5" stroke="#185FA5" stroke-width="1.2" fill="none" opacity="0.6"/>
+          <line x1="14" y1="17" x2="36" y2="17" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+          <line x1="14" y1="22" x2="30" y2="22" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+          <!-- Response bubble -->
+          <rect x="22" y="34" width="38" height="20" rx="5" fill="#185FA5" opacity="0.12"/>
+          <rect x="22" y="34" width="38" height="20" rx="5" stroke="#185FA5" stroke-width="1.2" fill="none" opacity="0.5"/>
+          <line x1="28" y1="41" x2="52" y2="41" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+          <line x1="28" y1="46" x2="44" y2="46" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+          <!-- RAG dot indicator -->
+          <circle cx="56" cy="14" r="5" fill="#185FA5" opacity="0.85"/>
+          <text x="56" y="18" text-anchor="middle" font-size="6" fill="white" font-family="sans-serif" font-weight="700">R</text>
         </svg>
       </div>
       <div class="card-body">
-        <div class="tags"><span class="tag tag-muted">Coming soon</span></div>
-        <p class="card-title">Project title</p>
-        <p class="card-desc">A short one-liner describing what this project solves.</p>
+        <div class="tags">
+          <span class="tag tag-blue">RAG</span>
+          <span class="tag tag-green">LLM Agent</span>
+          <span class="tag tag-purple">Streamlit</span>
+        </div>
+        <p class="card-title">Conversational RAG agent</p>
+        <p class="card-desc">GitHub documentation assistant with intent routing, support tickets, CRM operations, and guardrails.</p>
         <div class="card-footer">
-          <span class="card-metric">Add details</span>
+          <span class="card-metric">100% intent accuracy</span>
           <span class="card-arrow">→</span>
         </div>
       </div>
-    </div>
+    </a>
 
     <!-- ── PLACEHOLDER 3 ── -->
     <div class="card placeholder">

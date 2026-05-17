@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conversational RAG Agent · Zhongyi Hu</title>
+  <meta name="description" content="A multi-capability RAG-based GitHub documentation assistant with intent routing, CRM operations, guardrails, and analytics." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#FFFDF9;--bg-card:#FFFFFF;--bg-muted:#F7F4EF;--bg-code:#F2EFE8;
+      --text:#1C1A17;--text-sec:#6B6559;--text-ter:#A09890;
+      --border:rgba(60,50,30,0.11);--border-md:rgba(60,50,30,0.22);
+      --amber-bg:#FAF0E8;--amber:#EF9F27;--amber-dark:#854F0B;--amber-tag:#854F0B;
+      --green-bg:#EAF3DE;--green-tag:#3B6D11;
+      --blue-bg:#E6F1FB;--blue-tag:#185FA5;
+      --teal-bg:#E1F5EE;--teal-tag:#0F6E56;
+      --purple-bg:#F0EDFB;--purple-tag:#5B3DA8;
+      --red-bg:#FDECEA;--red-tag:#B91C1C;
+      --r-md:8px;--r-lg:14px;
+    }
+    @media(prefers-color-scheme:dark){:root{
+      --bg:#1A1714;--bg-card:#221F1B;--bg-muted:#2A2620;--bg-code:#252118;
+      --text:#F0EBE3;--text-sec:#A8A098;--text-ter:#6A6258;
+      --border:rgba(255,240,210,0.10);--border-md:rgba(255,240,210,0.20);
+      --amber-bg:#2E1F0A;--amber-tag:#FAC775;
+      --green-bg:#0E1F08;--green-tag:#C0DD97;
+      --blue-bg:#081828;--blue-tag:#85B7EB;
+      --teal-bg:#041F14;--teal-tag:#5DCAA5;
+      --purple-bg:#1A1230;--purple-tag:#A78BFA;
+      --red-bg:#2A0808;--red-tag:#FCA5A5;
+    }}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+    .wrap{max-width:740px;margin:0 auto;padding:2.5rem 1.75rem 5rem}
+
+    .back{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text-ter);text-decoration:none;margin-bottom:2.25rem;transition:color .15s}
+    .back:hover{color:var(--text-sec)}
+
+    .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem}
+    .tag{font-size:10px;letter-spacing:.05em;font-weight:500;padding:3px 10px;border-radius:99px}
+    .tag-amber {background:var(--amber-bg);  color:var(--amber-tag)}
+    .tag-green {background:var(--green-bg);  color:var(--green-tag)}
+    .tag-blue  {background:var(--blue-bg);   color:var(--blue-tag)}
+    .tag-teal  {background:var(--teal-bg);   color:var(--teal-tag)}
+    .tag-purple{background:var(--purple-bg); color:var(--purple-tag)}
+    .tag-red   {background:var(--red-bg);    color:var(--red-tag)}
+
+    h1{font-family:'Lora',serif;font-size:clamp(22px,4vw,32px);font-weight:500;line-height:1.2;margin-bottom:.75rem}
+    .hero-sub{font-size:15.5px;color:var(--text-sec);font-weight:300;max-width:600px;margin-bottom:1.75rem}
+
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:2.5rem}
+    .stat{background:var(--bg-muted);border-radius:var(--r-md);padding:.9rem 1rem}
+    .stat-label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-ter);margin-bottom:.25rem}
+    .stat-val{font-size:22px;font-weight:500;color:var(--text)}
+    .stat-note{font-size:11px;color:var(--text-ter);margin-top:.1rem}
+
+    hr{border:none;border-top:.5px solid var(--border);margin:2.25rem 0}
+
+    h2{font-family:'Lora',serif;font-size:19px;font-weight:500;margin-bottom:.6rem}
+    p{font-size:14.5px;color:var(--text-sec);margin-bottom:1rem;font-weight:300}
+    p:last-child{margin-bottom:0}
+
+    /* Screenshot cards */
+    .chart-card{background:var(--bg-card);border:.5px solid var(--border);border-radius:var(--r-lg);padding:1.5rem 1.5rem 1.25rem;margin:1.25rem 0 2rem}
+    .chart-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:.2rem}
+    .chart-sub{font-size:12px;color:var(--text-ter);margin-bottom:1.1rem}
+    .chart-card img{width:100%;border-radius:6px;display:block;border:.5px solid var(--border)}
+
+    .chart-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:1.25rem 0 2rem}
+    .chart-pair .chart-card{margin:0}
+    @media(max-width:540px){.chart-pair{grid-template-columns:1fr}}
+
+    /* Architecture / pipeline */
+    .arch-box{background:var(--bg-card);border:.5px solid var(--border);border-radius:var(--r-lg);padding:1.5rem;margin:1.25rem 0 2rem;overflow-x:auto}
+
+    .pipeline{display:flex;flex-wrap:wrap;gap:10px;margin:1.25rem 0 2rem}
+    .pipe-step{background:var(--bg-card);border:.5px solid var(--border);border-radius:var(--r-md);padding:.7rem 1rem;flex:1;min-width:140px}
+    .pipe-num{font-size:10px;font-weight:500;letter-spacing:.06em;color:var(--amber-tag);margin-bottom:.25rem;text-transform:uppercase}
+    .pipe-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:.2rem}
+    .pipe-desc{font-size:11.5px;color:var(--text-sec);line-height:1.5}
+
+    /* Capability grid */
+    .cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:1.25rem 0 2rem}
+    .cap-card{background:var(--bg-card);border:.5px solid var(--border);border-radius:var(--r-md);padding:.85rem 1rem}
+    .cap-icon{font-size:16px;margin-bottom:.35rem}
+    .cap-title{font-size:12.5px;font-weight:500;color:var(--text);margin-bottom:.25rem}
+    .cap-desc{font-size:11.5px;color:var(--text-sec);line-height:1.5}
+
+    /* Eval table */
+    .res-table{width:100%;border-collapse:collapse;font-size:13px;margin:1rem 0 1.5rem}
+    .res-table th{text-align:left;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-ter);padding:.5rem .75rem;border-bottom:.5px solid var(--border-md)}
+    .res-table td{padding:.6rem .75rem;border-bottom:.5px solid var(--border);color:var(--text-sec)}
+    .res-table tr:last-child td{border-bottom:none}
+    .res-table .highlight td{color:var(--text);font-weight:500}
+    .pass{color:var(--green-tag);font-weight:500}
+
+    /* Callout */
+    .callout{background:var(--amber-bg);border-left:3px solid var(--amber);border-radius:0 var(--r-md) var(--r-md) 0;padding:1rem 1.1rem;margin:1.25rem 0 2rem}
+    .callout p{color:var(--amber-dark);font-size:13.5px;margin:0}
+    @media(prefers-color-scheme:dark){.callout p{color:var(--amber-tag)}}
+
+    /* Tech stack badges */
+    .stack-row{display:flex;flex-wrap:wrap;gap:8px;margin:1rem 0 2rem}
+    .stack-badge{font-size:11.5px;font-weight:400;padding:4px 12px;border-radius:6px;border:.5px solid var(--border-md);color:var(--text-sec);background:var(--bg-card)}
+
+    /* Footer */
+    .proj-footer{margin-top:3rem;padding-top:1.5rem;border-top:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem}
+    .proj-footer a{font-size:13px;color:var(--text-sec);text-decoration:none;display:flex;align-items:center;gap:5px}
+    .proj-footer a:hover{color:var(--text)}
+
+    @media(max-width:480px){.wrap{padding:2rem 1.1rem 4rem}.stats{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+
+  <a class="back" href="../../index.html">← Back to projects</a>
+
+  <!-- HERO -->
+  <div class="tags">
+    <span class="tag tag-blue">RAG</span>
+    <span class="tag tag-green">LLM Agent</span>
+    <span class="tag tag-amber">ChromaDB</span>
+    <span class="tag tag-teal">NLP</span>
+    <span class="tag tag-purple">Streamlit</span>
+    <span class="tag tag-red">Guardrails</span>
+  </div>
+  <h1>Conversational RAG Agent</h1>
+  <p class="hero-sub">A multi-capability GitHub documentation assistant built with retrieval-augmented generation. Routes user intent across knowledge Q&amp;A, support tickets, CRM operations, and safety guardrails — all in a single chat interface.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Baseline tests</div>
+      <div class="stat-val">15/15</div>
+      <div class="stat-note">All passed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Intent accuracy</div>
+      <div class="stat-val">100%</div>
+      <div class="stat-note">64 stress cases</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">RAG support rate</div>
+      <div class="stat-val">~98%</div>
+      <div class="stat-note">Latest stress run</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Avg confidence</div>
+      <div class="stat-val">89.5%</div>
+      <div class="stat-note">Live session telemetry</div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- SECTION 1: PROBLEM -->
+  <h2>The problem</h2>
+  <p>GitHub's documentation is vast and scattered. Users waste time navigating docs for routine tasks — setting up 2FA, managing billing, creating repositories — while support teams handle repetitive queries that could be automated.</p>
+  <p>This project builds a single conversational interface that handles the full range of GitHub support needs: answered questions backed by cited documentation, support ticket lifecycle management, and CRM operations (user registration, billing, plan upgrades) — all with safety guardrails to prevent misuse.</p>
+
+  <hr/>
+
+  <!-- SECTION 2: CHAT DEMO -->
+  <h2>RAG knowledge Q&amp;A</h2>
+  <p>User questions are routed to a vector retriever backed by scraped GitHub docs. The LLM generates answers grounded in retrieved chunks, with source URLs cited inline. A collapsible "Why this answer?" panel exposes the top-5 retrieved chunks with cosine similarity scores, giving full transparency into the retrieval process.</p>
+
+  <div class="chart-card">
+    <div class="chart-title">Cited answer with retrieval transparency</div>
+    <div class="chart-sub">Query: "How do I set up two-factor authentication on GitHub?" — 5 chunks retrieved, top match at 93% similarity.</div>
+    <img src="chat_rag.png" alt="Chat interface showing a RAG answer about two-factor authentication with source citations and chunk retrieval panel" />
+  </div>
+
+  <hr/>
+
+  <!-- SECTION 3: ARCHITECTURE -->
+  <h2>Architecture</h2>
+  <p>Every user message passes through an intent router (regex-first, LLM fallback) that dispatches to one of nine specialised handlers. This keeps each capability isolated and testable while sharing a single conversation memory and SQLite persistence layer.</p>
+
+  <div class="arch-box">
+    <svg viewBox="0 0 660 230" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:660px;display:block;font-family:'DM Sans',sans-serif">
+      <!-- User message -->
+      <rect x="0" y="90" width="120" height="50" rx="7" fill="var(--amber-bg)" stroke="var(--border-md)" stroke-width="0.8"/>
+      <text x="60" y="111" text-anchor="middle" font-size="10" fill="var(--amber-tag)" font-weight="500">User Message</text>
+      <text x="60" y="126" text-anchor="middle" font-size="9" fill="var(--text-sec)">text or voice</text>
+
+      <!-- Arrow -->
+      <line x1="120" y1="115" x2="155" y2="115" stroke="var(--border-md)" stroke-width="1.2" marker-end="url(#arr)"/>
+
+      <!-- Intent router -->
+      <rect x="155" y="90" width="120" height="50" rx="7" fill="var(--blue-bg)" stroke="var(--border-md)" stroke-width="0.8"/>
+      <text x="215" y="111" text-anchor="middle" font-size="10" fill="var(--blue-tag)" font-weight="500">Intent Router</text>
+      <text x="215" y="126" text-anchor="middle" font-size="9" fill="var(--text-sec)">regex → LLM fallback</text>
+
+      <!-- Arrow -->
+      <line x1="275" y1="115" x2="310" y2="115" stroke="var(--border-md)" stroke-width="1.2" marker-end="url(#arr)"/>
+
+      <!-- Handler box -->
+      <rect x="310" y="20" width="200" height="190" rx="7" fill="var(--bg-muted)" stroke="var(--border-md)" stroke-width="0.8"/>
+      <text x="410" y="40" text-anchor="middle" font-size="9.5" fill="var(--text-ter)" font-weight="500" letter-spacing="0.08em">HANDLERS</text>
+      <text x="410" y="57"  text-anchor="middle" font-size="9" fill="var(--text-sec)">rag_query · create_ticket · check_ticket</text>
+      <text x="410" y="72"  text-anchor="middle" font-size="9" fill="var(--text-sec)">check_billing · register_user · upgrade_plan</text>
+      <text x="410" y="87"  text-anchor="middle" font-size="9" fill="var(--text-sec)">list_accounts · close_tickets · close_ticket_by_id</text>
+      <line x1="330" y1="96" x2="495" y2="96" stroke="var(--border)" stroke-width="0.6"/>
+      <text x="410" y="113" text-anchor="middle" font-size="9" fill="var(--red-tag)" font-weight="500">out_of_scope · prompt_injection → blocked</text>
+      <line x1="330" y1="122" x2="495" y2="122" stroke="var(--border)" stroke-width="0.6"/>
+      <text x="410" y="141" text-anchor="middle" font-size="9" fill="var(--text-ter)">ChromaDB  ·  SQLite  ·  LLM  ·  Voice</text>
+
+      <!-- Arrow out -->
+      <line x1="510" y1="115" x2="545" y2="115" stroke="var(--border-md)" stroke-width="1.2" marker-end="url(#arr)"/>
+
+      <!-- Output -->
+      <rect x="545" y="90" width="110" height="50" rx="7" fill="var(--green-bg)" stroke="var(--border-md)" stroke-width="0.8"/>
+      <text x="600" y="111" text-anchor="middle" font-size="10" fill="var(--green-tag)" font-weight="500">Streamlit UI</text>
+      <text x="600" y="126" text-anchor="middle" font-size="9" fill="var(--text-sec)">+ optional voice</text>
+
+      <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="var(--border-md)"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+
+  <div class="pipeline">
+    <div class="pipe-step">
+      <div class="pipe-num">Layer 01</div>
+      <div class="pipe-name">Ingestion</div>
+      <div class="pipe-desc">GitHub docs scraped, chunked, and embedded into ChromaDB using all-MiniLM-L6-v2</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">Layer 02</div>
+      <div class="pipe-name">Routing</div>
+      <div class="pipe-desc">Regex patterns cover common intents; LLM fallback handles ambiguous phrasing</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">Layer 03</div>
+      <div class="pipe-name">Generation</div>
+      <div class="pipe-desc">Retrieved chunks passed to Llama-3.1 via Groq API; answer grounded with cited sources</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">Layer 04</div>
+      <div class="pipe-name">Persistence</div>
+      <div class="pipe-desc">Tickets, user accounts, and session history stored in SQLite for cross-session continuity</div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- SECTION 4: CAPABILITIES -->
+  <h2>Capabilities</h2>
+  <p>The agent handles thirteen distinct capability types, from single-turn knowledge queries to multi-turn state-machine flows for ticket creation and user registration.</p>
+
+  <div class="cap-grid">
+    <div class="cap-card">
+      <div class="cap-icon">🔍</div>
+      <div class="cap-title">Knowledge Q&amp;A</div>
+      <div class="cap-desc">RAG answers with source URL citations and chunk-level match scores</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">🎫</div>
+      <div class="cap-title">Support Tickets</div>
+      <div class="cap-desc">Multi-turn creation flow: category → description → priority → review → confirm</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">👤</div>
+      <div class="cap-title">User Registration</div>
+      <div class="cap-desc">Guided plan selection (Free / Pro / Team / Enterprise) with account summary confirmation</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">⚡</div>
+      <div class="cap-title">Plan Upgrades</div>
+      <div class="cap-desc">Before/after comparison table; changes reflected immediately in SQLite</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">💳</div>
+      <div class="cap-title">Billing Checker</div>
+      <div class="cap-desc">Account plan details retrieved by username; suggests registration if not found</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">🚫</div>
+      <div class="cap-title">Guardrails</div>
+      <div class="cap-desc">Blocks prompt injection attempts and out-of-scope requests with clear messaging</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">🎙️</div>
+      <div class="cap-title">Voice Mode</div>
+      <div class="cap-desc">Jarvis mode: SpeechRecognition input + pyttsx3 spoken responses</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">📊</div>
+      <div class="cap-title">Analytics</div>
+      <div class="cap-desc">Live telemetry: intent distribution, confidence over time, knowledge gaps</div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- SECTION 5: TICKET FLOW -->
+  <h2>Support ticket lifecycle</h2>
+  <p>Ticket creation uses a state machine with four sequential turns: category selection, issue description, priority triage, and a review-before-submit step. Created tickets are persisted in SQLite and visible in the sidebar. Checking a ticket by ID optionally triggers a RAG lookup to provide guidance based on the issue description.</p>
+
+  <div class="chart-card">
+    <div class="chart-title">Multi-turn ticket creation and lookup</div>
+    <div class="chart-sub">Category → description → priority → confirm → ticket ID assigned. Follow-up lookup retrieves RAG-guided resolution steps.</div>
+    <img src="ticket_flow.png" alt="Chat showing multi-turn support ticket creation flow ending with TKT-011 confirmation and a follow-up ticket lookup with RAG guidance" />
+  </div>
+
+  <hr/>
+
+  <!-- SECTION 6: CRM -->
+  <h2>CRM operations</h2>
+  <p>The agent doubles as a lightweight CRM: it handles user registration with plan selection, billing lookups, plan upgrades with a before/after comparison, and full account listing. All state is persisted to SQLite and reflected immediately across turns.</p>
+
+  <div class="chart-card">
+    <div class="chart-title">Registration, plan upgrade, and account listing</div>
+    <div class="chart-sub">User 'lucy' not found → guided registration on Free plan → upgraded to Team → account list confirms all 6 registered users.</div>
+    <img src="crm.png" alt="Chat showing full CRM workflow: billing check, new user registration, plan upgrade from Free to Team, and account listing" />
+  </div>
+
+  <hr/>
+
+  <!-- SECTION 7: GUARDRAILS -->
+  <h2>Safety &amp; guardrails</h2>
+  <p>Two guardrail types are enforced at the intent routing layer. Prompt injection attempts are detected and blocked before reaching the LLM. Out-of-scope requests (non-GitHub topics) return a redirect message. When the knowledge base cannot reliably answer a question, the agent returns an "insufficient evidence" response rather than hallucinating — and suggests opening a support ticket if appropriate.</p>
+
+  <div class="chart-card">
+    <div class="chart-title">Prompt injection block, out-of-scope redirect, and knowledge gap handling</div>
+    <div class="chart-sub">Three guardrail scenarios in one session: injection attempt blocked, weather question redirected, future roadmap question returns honest uncertainty.</div>
+    <img src="guardrail.png" alt="Chat showing three guardrail scenarios: blocked prompt injection, out-of-scope redirect for weather question, and graceful knowledge gap for GitHub roadmap question" />
+  </div>
+
+  <hr/>
+
+  <!-- SECTION 8: ANALYTICS -->
+  <h2>Analytics dashboard</h2>
+  <p>A separate Streamlit page tracks live session telemetry. Intent distribution shows how users are engaging with the agent; a confidence-over-time chart tracks answer quality across a session; a knowledge gap log surfaces questions the retriever couldn't adequately answer — a direct signal for doc coverage improvements.</p>
+
+  <div class="chart-card">
+    <div class="chart-title">Live analytics dashboard</div>
+    <div class="chart-sub">94 total queries across a demo session: 31 knowledge queries, 8 tickets created, 4 blocked, average confidence 89.5%.</div>
+    <img src="analytics.png" alt="Analytics dashboard showing query counts, intent distribution bar chart, and confidence over time line chart" />
+  </div>
+
+  <hr/>
+
+  <!-- SECTION 9: EVALUATION -->
+  <h2>Evaluation</h2>
+  <p>Three evaluation suites were run against the agent. The baseline suite tests expected intent routing and answer quality on curated prompts. The stress suite covers edge cases: typos, ambiguous phrasing, multi-intent queries, and adversarial inputs.</p>
+
+  <table class="res-table">
+    <thead><tr><th>Suite</th><th>Scope</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr class="highlight"><td>Baseline (test_cases.py)</td><td>15 curated cases — routing + quality</td><td class="pass">✅ 15/15 passed</td></tr>
+      <tr class="highlight"><td>Stress — intent accuracy</td><td>64 edge-case prompts</td><td class="pass">✅ 100%</td></tr>
+      <tr class="highlight"><td>Stress — RAG support rate</td><td>Knowledge queries with citations</td><td class="pass">✅ ~98%</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <p>The knowledge gap log (visible in the analytics dashboard) captures questions the retriever couldn't fully answer — including future roadmap queries and edge-case typos. These are surfaced to guide future documentation ingestion rather than silently hallucinating answers.</p>
+  </div>
+
+  <hr/>
+
+  <!-- SECTION 10: TECH STACK -->
+  <h2>Tech stack</h2>
+  <p>The full pipeline from scraping to generation uses open-source components, with Groq's free API tier providing low-latency LLM inference.</p>
+
+  <div class="stack-row">
+    <span class="stack-badge">Llama-3.1-8b-instant (Groq)</span>
+    <span class="stack-badge">ChromaDB</span>
+    <span class="stack-badge">all-MiniLM-L6-v2</span>
+    <span class="stack-badge">SQLite</span>
+    <span class="stack-badge">Streamlit</span>
+    <span class="stack-badge">Loguru</span>
+    <span class="stack-badge">fpdf2</span>
+    <span class="stack-badge">SpeechRecognition</span>
+    <span class="stack-badge">pyttsx3</span>
+    <span class="stack-badge">Pydantic</span>
+  </div>
+
+  <hr/>
+
+  <!-- SECTION 11: FUTURE WORK -->
+  <h2>Future directions</h2>
+  <p>Several improvements could extend performance and scope:</p>
+  <ul style="font-size:14px;color:var(--text-sec);font-weight:300;padding-left:1.25rem;line-height:2.2">
+    <li>Hybrid retrieval — combine dense (vector) and sparse (BM25) search for better coverage on rare queries</li>
+    <li>Re-ranking — add a cross-encoder re-ranker between retrieval and generation to improve top-chunk precision</li>
+    <li>Multi-doc ingestion — extend beyond GitHub docs to organisation wikis or internal knowledge bases</li>
+    <li>Human-in-the-loop escalation — route low-confidence answers to a human agent rather than returning uncertainty</li>
+    <li>Automated doc gap closure — use the knowledge gap log to trigger targeted scraping of missing documentation</li>
+  </ul>
+
+  <div class="proj-footer">
+    <a href="../../index.html">← All projects</a>
+    <a href="https://github.com/HzyBetty" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+      View on GitHub
+    </a>
+  </div>
+
+</main>
+</body>
+</html>
