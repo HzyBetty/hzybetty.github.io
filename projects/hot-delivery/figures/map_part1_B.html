@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_0cdcbee3d04dd5d085a7fcd69ff82ad8 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+    <div style="position:fixed;bottom:30px;left:30px;z-index:999;
+                background:white;padding:8px 12px;border-radius:6px;
+                border:1px solid #ccc;font-size:12px;line-height:1.8">
+      <b>Legend</b><br>
+      🟢 Depot &nbsp; 🟠 Restaurant &nbsp; 🔴 Delivery nbhd<br>
+      Numbers = arc step order
+    </div>
+    
+            <div class="folium-map" id="map_0cdcbee3d04dd5d085a7fcd69ff82ad8" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_0cdcbee3d04dd5d085a7fcd69ff82ad8 = L.map(
+                "map_0cdcbee3d04dd5d085a7fcd69ff82ad8",
+                {
+                    center: [43.681000000000004, -79.43402222222223],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 12,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_c3c8f786d59fd3d23c9adb7b11a0f528 = L.tileLayer(
+                "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 20,
+  "maxNativeZoom": 20,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors \u0026copy; \u003ca href=\"https://carto.com/attributions\"\u003eCARTO\u003c/a\u003e",
+  "subdomains": "abcd",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_c3c8f786d59fd3d23c9adb7b11a0f528.addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var poly_line_5f474be4047dbf69429b330120805f28 = L.polyline(
+                [[43.6827, -79.373], [43.6564, -79.386], [43.6496, -79.3833], [43.6492, -79.3823], [43.6684, -79.3689], [43.6915, -79.4307], [43.6736, -79.4035], [43.7144, -79.5909], [43.7432, -79.5876]],
+                {"bubblingMouseEvents": true, "color": "steelblue", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "steelblue", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 3}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var marker_a56e83243f387a35775641eb7345552c = L.marker(
+                [43.66955, -79.37950000000001],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var div_icon_1187c3f0f1f7c2e461b13d71e169c661 = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:steelblue;background:white;padding:1px 4px;border-radius:3px;opacity:0.9;white-space:nowrap\"\u003e1\u003c/div\u003e",
+  "iconSize": [32, 16],
+  "iconAnchor": [16, 8],
+  "className": "empty",
+});
+        
+    
+                marker_a56e83243f387a35775641eb7345552c.setIcon(div_icon_1187c3f0f1f7c2e461b13d71e169c661);
+            
+    
+            var marker_90cfbf4c4038dae7593935da176e966b = L.marker(
+                [43.653, -79.38465],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var div_icon_dad45dc482a93c8bb412410a7e66f42c = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:steelblue;background:white;padding:1px 4px;border-radius:3px;opacity:0.9;white-space:nowrap\"\u003e2\u003c/div\u003e",
+  "iconSize": [32, 16],
+  "iconAnchor": [16, 8],
+  "className": "empty",
+});
+        
+    
+                marker_90cfbf4c4038dae7593935da176e966b.setIcon(div_icon_dad45dc482a93c8bb412410a7e66f42c);
+            
+    
+            var marker_b80e244887493629f24e72ac64364118 = L.marker(
+                [43.6494, -79.3828],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var div_icon_865fee8b8db36abd6db2e91c1a3a9cfd = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:steelblue;background:white;padding:1px 4px;border-radius:3px;opacity:0.9;white-space:nowrap\"\u003e3\u003c/div\u003e",
+  "iconSize": [32, 16],
+  "iconAnchor": [16, 8],
+  "className": "empty",
+});
+        
+    
+                marker_b80e244887493629f24e72ac64364118.setIcon(div_icon_865fee8b8db36abd6db2e91c1a3a9cfd);
+            
+    
+            var marker_63b4d867f4a7470b2e4461f4d6610459 = L.marker(
+                [43.6588, -79.37559999999999],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var div_icon_f004a02bd9dcc52fd0664b93b35ae2ad = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:steelblue;background:white;padding:1px 4px;border-radius:3px;opacity:0.9;white-space:nowrap\"\u003e4\u003c/div\u003e",
+  "iconSize": [32, 16],
+  "iconAnchor": [16, 8],
+  "className": "empty",
+});
+        
+    
+                marker_63b4d867f4a7470b2e4461f4d6610459.setIcon(div_icon_f004a02bd9dcc52fd0664b93b35ae2ad);
+            
+    
+            var marker_837e0c208317fd89bd33eb12bf799d63 = L.marker(
+                [43.67995, -79.3998],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var div_icon_fec7bdf7a115128d6cc3c0ef8e68b09b = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:steelblue;background:white;padding:1px 4px;border-radius:3px;opacity:0.9;white-space:nowrap\"\u003e5\u003c/div\u003e",
+  "iconSize": [32, 16],
+  "iconAnchor": [16, 8],
+  "className": "empty",
+});
+        
+    
+                marker_837e0c208317fd89bd33eb12bf799d63.setIcon(div_icon_fec7bdf7a115128d6cc3c0ef8e68b09b);
+            
+    
+            var marker_bdbb332b555ead64b61b06b9fced8157 = L.marker(
+                [43.68255, -79.4171],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var div_icon_976501b1883ecbda2e21a4995070e2b3 = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:steelblue;background:white;padding:1px 4px;border-radius:3px;opacity:0.9;white-space:nowrap\"\u003e6\u003c/div\u003e",
+  "iconSize": [32, 16],
+  "iconAnchor": [16, 8],
+  "className": "empty",
+});
+        
+    
+                marker_bdbb332b555ead64b61b06b9fced8157.setIcon(div_icon_976501b1883ecbda2e21a4995070e2b3);
+            
+    
+            var marker_2748c9aca3a9e8ed29d5cf8eb322ac08 = L.marker(
+                [43.694, -79.49719999999999],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var div_icon_8da618cf0264a9ab5f9b0caec519e13e = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:steelblue;background:white;padding:1px 4px;border-radius:3px;opacity:0.9;white-space:nowrap\"\u003e7\u003c/div\u003e",
+  "iconSize": [32, 16],
+  "iconAnchor": [16, 8],
+  "className": "empty",
+});
+        
+    
+                marker_2748c9aca3a9e8ed29d5cf8eb322ac08.setIcon(div_icon_8da618cf0264a9ab5f9b0caec519e13e);
+            
+    
+            var marker_b608bcd5dd5e69e16b1a7d1dab0060c2 = L.marker(
+                [43.7288, -79.58924999999999],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var div_icon_657e9901617524ef2f2e4885d3d5201c = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:steelblue;background:white;padding:1px 4px;border-radius:3px;opacity:0.9;white-space:nowrap\"\u003e8\u003c/div\u003e",
+  "iconSize": [32, 16],
+  "iconAnchor": [16, 8],
+  "className": "empty",
+});
+        
+    
+                marker_b608bcd5dd5e69e16b1a7d1dab0060c2.setIcon(div_icon_657e9901617524ef2f2e4885d3d5201c);
+            
+    
+            var marker_691630dcaf9e1b6c77177407878b709b = L.marker(
+                [43.6827, -79.373],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var icon_4427457410f8a20b97325d9e962db2c4 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_691630dcaf9e1b6c77177407878b709b.bindTooltip(
+                `<div>
+                     🏠 Depot: Downtown Toronto (Rosedale)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_691630dcaf9e1b6c77177407878b709b.setIcon(icon_4427457410f8a20b97325d9e962db2c4);
+            
+    
+            var marker_7ccd7cdb2ee290127a34c95c36292ebe = L.marker(
+                [43.6564, -79.386],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var icon_a98ef83b6c6d7b70c06c490337fc3ab7 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "orange",
+  "iconColor": "white",
+  "icon": "cutlery",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_7ccd7cdb2ee290127a34c95c36292ebe.bindTooltip(
+                `<div>
+                     🍽 Restaurant: Downtown Toronto (Central Bay Street)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_7ccd7cdb2ee290127a34c95c36292ebe.setIcon(icon_a98ef83b6c6d7b70c06c490337fc3ab7);
+            
+    
+            var marker_eb2ed264d762c03e9269af0f34fe863a = L.marker(
+                [43.6496, -79.3833],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var icon_8062438db43b14855af2cf72620c7a83 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "orange",
+  "iconColor": "white",
+  "icon": "cutlery",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_eb2ed264d762c03e9269af0f34fe863a.bindTooltip(
+                `<div>
+                     🍽 Restaurant: Downtown Toronto (Richmond / Adelaide / 
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_eb2ed264d762c03e9269af0f34fe863a.setIcon(icon_8062438db43b14855af2cf72620c7a83);
+            
+    
+            var marker_8bd5db0d342b054d33097b369d903c5d = L.marker(
+                [43.6492, -79.3823],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var icon_2c3fbc6c78c1a820f4d6de6254220eb3 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "flag",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_8bd5db0d342b054d33097b369d903c5d.bindTooltip(
+                `<div>
+                     📍 Delivery: Downtown Toronto (Underground city)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_8bd5db0d342b054d33097b369d903c5d.setIcon(icon_2c3fbc6c78c1a820f4d6de6254220eb3);
+            
+    
+            var marker_a3f00f74d8dfbbe63a06043b4529f401 = L.marker(
+                [43.6684, -79.3689],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var icon_763186345fc7b98775864de7bab65f52 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "flag",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_a3f00f74d8dfbbe63a06043b4529f401.bindTooltip(
+                `<div>
+                     📍 Delivery: Downtown Toronto (St. James Town / Cabba
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_a3f00f74d8dfbbe63a06043b4529f401.setIcon(icon_763186345fc7b98775864de7bab65f52);
+            
+    
+            var marker_9ca945d23fce5bb99d526e809362dd5f = L.marker(
+                [43.6915, -79.4307],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var icon_fc108467a84c4055cbd5224f93594efb = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "orange",
+  "iconColor": "white",
+  "icon": "cutlery",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_9ca945d23fce5bb99d526e809362dd5f.bindTooltip(
+                `<div>
+                     🍽 Restaurant: York (Cedarvale)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_9ca945d23fce5bb99d526e809362dd5f.setIcon(icon_fc108467a84c4055cbd5224f93594efb);
+            
+    
+            var marker_7288aee6940aa766e54031e72b9c44e0 = L.marker(
+                [43.6736, -79.4035],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var icon_88489ac385021bc105637cb21212326e = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "flag",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_7288aee6940aa766e54031e72b9c44e0.bindTooltip(
+                `<div>
+                     📍 Delivery: Central Toronto (The Annex / North Midto
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_7288aee6940aa766e54031e72b9c44e0.setIcon(icon_88489ac385021bc105637cb21212326e);
+            
+    
+            var marker_46bc7246f1f0c755c027bc6de6903a39 = L.marker(
+                [43.7144, -79.5909],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var icon_e40f90ff6a7ca2f190ad3a6a7a2ee0f7 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "orange",
+  "iconColor": "white",
+  "icon": "cutlery",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_46bc7246f1f0c755c027bc6de6903a39.bindTooltip(
+                `<div>
+                     🍽 Restaurant: Etobicoke Northwest (Clairville / Humber
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_46bc7246f1f0c755c027bc6de6903a39.setIcon(icon_e40f90ff6a7ca2f190ad3a6a7a2ee0f7);
+            
+    
+            var marker_eae19fa20e25a03b622d41c2588a4d8a = L.marker(
+                [43.7432, -79.5876],
+                {
+}
+            ).addTo(map_0cdcbee3d04dd5d085a7fcd69ff82ad8);
+        
+    
+            var icon_760a99c074589f9cffbe1e7493901c26 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "flag",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_eae19fa20e25a03b622d41c2588a4d8a.bindTooltip(
+                `<div>
+                     📍 Delivery: Etobicoke (South Steeles / Silverstone /
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_eae19fa20e25a03b622d41c2588a4d8a.setIcon(icon_760a99c074589f9cffbe1e7493901c26);
+            
+</script>
+</html>

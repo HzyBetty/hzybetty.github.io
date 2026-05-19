@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Last-Mile Delivery Optimization · Zhongyi Hu</title>
+  <meta name="description" content="Prescriptive routing and driver assignment for online food delivery — a four-part MIP progression culminating in a real-time heuristic." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #FFFDF9;
+      --bg-card:     #FFFFFF;
+      --bg-muted:    #F7F4EF;
+      --bg-deep:     #F0EBE2;
+      --text:        #1C1A17;
+      --text-sec:    #6B6559;
+      --text-ter:    #A09890;
+      --border:      rgba(60,50,30,0.12);
+      --border-md:   rgba(60,50,30,0.22);
+      --amber:       #854F0B;
+      --amber-bg:    #FAF0E8;
+      --amber-mid:   #E8A04A;
+      --green-bg:    #EAF3DE;
+      --green-tag:   #3B6D11;
+      --blue-bg:     #E6F1FB;
+      --blue-tag:    #185FA5;
+      --purple-bg:   #F0EDFB;
+      --purple-tag:  #5B3DA8;
+      --radius-sm:   6px;
+      --radius-md:   10px;
+      --radius-lg:   16px;
+      --col:         720px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:          #1A1714;
+        --bg-card:     #221F1B;
+        --bg-muted:    #2A2620;
+        --bg-deep:     #252018;
+        --text:        #F0EBE3;
+        --text-sec:    #A8A098;
+        --text-ter:    #6A6258;
+        --border:      rgba(255,240,210,0.10);
+        --border-md:   rgba(255,240,210,0.20);
+        --amber:       #FAC775;
+        --amber-bg:    #2E1F0A;
+        --amber-mid:   #C07820;
+        --green-bg:    #0E1F08;
+        --green-tag:   #C0DD97;
+        --blue-bg:     #081828;
+        --blue-tag:    #85B7EB;
+        --purple-bg:   #1A1230;
+        --purple-tag:  #A78BFA;
+      }
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.65;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 0.5px solid var(--border);
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-back {
+      font-size: 13px;
+      color: var(--text-sec);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.15s;
+    }
+    .nav-back:hover { color: var(--text); }
+    .nav-crumb { font-size: 13px; color: var(--text-ter); }
+
+    /* ── LAYOUT ── */
+    .wrap {
+      max-width: var(--col);
+      margin: 0 auto;
+      padding: 3.5rem 2rem 5rem;
+    }
+
+    /* ── HERO ── */
+    .hero { margin-bottom: 3rem; }
+
+    .hero-eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      display: block;
+      width: 24px;
+      height: 1.5px;
+      background: var(--amber-mid);
+      flex-shrink: 0;
+    }
+
+    h1.hero-title {
+      font-family: 'Lora', serif;
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 500;
+      line-height: 1.15;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+
+    .hero-sub {
+      font-size: 16px;
+      color: var(--text-sec);
+      font-weight: 300;
+      max-width: 560px;
+      margin-bottom: 1.75rem;
+      line-height: 1.6;
+    }
+
+    /* ── STAT PILLS ── */
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 2rem;
+    }
+    .stat {
+      background: var(--bg-deep);
+      border: 0.5px solid var(--border-md);
+      border-radius: 99px;
+      padding: 6px 16px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .stat-val {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-ter);
+      letter-spacing: 0.02em;
+    }
+
+    /* ── TAG ROW ── */
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 2rem; }
+    .tag {
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      font-weight: 500;
+      padding: 3px 11px;
+      border-radius: 99px;
+    }
+    .tag-amber  { background: var(--amber-bg);  color: var(--amber); }
+    .tag-green  { background: var(--green-bg);  color: var(--green-tag); }
+    .tag-blue   { background: var(--blue-bg);   color: var(--blue-tag); }
+    .tag-purple { background: var(--purple-bg); color: var(--purple-tag); }
+
+    /* ── DIVIDERS & SECTION LABELS ── */
+    hr { border: none; border-top: 0.5px solid var(--border); margin: 2.5rem 0; }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-ter);
+      margin-bottom: 1rem;
+    }
+
+    /* ── PROSE ── */
+    .prose { font-size: 15px; color: var(--text-sec); font-weight: 300; line-height: 1.75; }
+    .prose + .prose { margin-top: 0.85rem; }
+
+    h2.section-title {
+      font-family: 'Lora', serif;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+      line-height: 1.3;
+    }
+
+    h3.part-title {
+      font-family: 'Lora', serif;
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── MAP EMBED ── */
+    .map-frame-wrap {
+      border: 0.5px solid var(--border-md);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin: 1.5rem 0;
+      background: var(--bg-muted);
+    }
+    .map-label {
+      padding: 8px 16px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-ter);
+      border-bottom: 0.5px solid var(--border);
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .map-label .map-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #4CAF50; display: inline-block; margin-right: 6px;
+    }
+    .map-frame-wrap iframe {
+      width: 100%;
+      height: 420px;
+      border: none;
+      display: block;
+    }
+    .map-caption {
+      padding: 10px 16px;
+      font-size: 12px;
+      color: var(--text-ter);
+      background: var(--bg-card);
+      border-top: 0.5px solid var(--border);
+      font-style: italic;
+    }
+
+    /* ── CHART ── */
+    .chart-wrap {
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin: 1.5rem 0;
+      background: var(--bg-card);
+    }
+    .chart-wrap img {
+      width: 100%;
+      display: block;
+    }
+    .chart-caption {
+      padding: 10px 16px;
+      font-size: 12px;
+      color: var(--text-ter);
+      border-top: 0.5px solid var(--border);
+      font-style: italic;
+    }
+
+    /* ── FOUR-PART TIMELINE ── */
+    .timeline { display: flex; flex-direction: column; gap: 0; margin: 1.5rem 0; }
+    .tl-item {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 0 1.25rem;
+      position: relative;
+    }
+    .tl-item:not(:last-child) .tl-line { height: 100%; }
+
+    .tl-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .tl-dot {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--bg-deep);
+      border: 1.5px solid var(--border-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sec);
+      flex-shrink: 0;
+      z-index: 1;
+      position: relative;
+    }
+    .tl-line {
+      width: 1px;
+      flex: 1;
+      min-height: 20px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+    .tl-content {
+      padding-bottom: 2rem;
+    }
+    .tl-content:last-child { padding-bottom: 0; }
+
+    .tl-meta {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 0.3rem;
+    }
+    .tl-result {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 0.6rem;
+      background: var(--bg-deep);
+      border-radius: var(--radius-sm);
+      padding: 4px 10px;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+    .tl-result .r-label { color: var(--text-ter); }
+    .tl-result .r-val   { color: var(--text); font-weight: 500; }
+
+    /* ── INSIGHT CARDS ── */
+    .insight-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin: 1.25rem 0;
+    }
+    .insight-card {
+      background: var(--bg-card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.1rem 1.25rem;
+    }
+    .insight-icon { font-size: 20px; margin-bottom: 0.5rem; }
+    .insight-head {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 0.3rem;
+    }
+    .insight-body {
+      font-size: 12px;
+      color: var(--text-sec);
+      font-weight: 300;
+      line-height: 1.55;
+    }
+
+    /* ── RESULTS TABLE ── */
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 1.25rem 0;
+    }
+    .results-table thead th {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-ter);
+      font-weight: 500;
+      padding: 0 12px 10px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--border-md);
+    }
+    .results-table tbody tr {
+      border-bottom: 0.5px solid var(--border);
+    }
+    .results-table tbody tr:last-child { border-bottom: none; }
+    .results-table tbody td {
+      padding: 10px 12px;
+      color: var(--text-sec);
+      font-weight: 300;
+      vertical-align: middle;
+    }
+    .results-table tbody td:first-child { color: var(--text); font-weight: 400; }
+    .results-table tbody td.num {
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 500;
+    }
+    .badge-green { background: var(--green-bg); color: var(--green-tag); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber); }
+    .badge-blue  { background: var(--blue-bg);  color: var(--blue-tag); }
+
+    /* ── SKILLS SECTION ── */
+    .skills-wrap {
+      background: var(--bg-deep);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 1.75rem;
+      margin: 1.5rem 0;
+    }
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .skill-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .skill-bullet {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--amber-mid);
+      flex-shrink: 0;
+      margin-top: 7px;
+    }
+    .skill-text {
+      font-size: 13px;
+      color: var(--text-sec);
+      font-weight: 300;
+      line-height: 1.4;
+    }
+    .skill-text strong { color: var(--text); font-weight: 500; }
+
+    /* ── LINK ROW ── */
+    .link-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 2.5rem;
+    }
+    .link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .link-btn:hover { opacity: 0.82; transform: translateY(-1px); }
+    .link-btn-primary {
+      background: var(--text);
+      color: var(--bg);
+    }
+    .link-btn-secondary {
+      background: var(--bg-deep);
+      color: var(--text);
+      border: 0.5px solid var(--border-md);
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top: 3rem;
+      padding-top: 1.25rem;
+      border-top: 0.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .footer-note { font-size: 12px; color: var(--text-ter); }
+    .footer-link {
+      font-size: 12px;
+      color: var(--text-sec);
+      text-decoration: none;
+    }
+    .footer-link:hover { color: var(--text); }
+
+    /* ── CALLOUT ── */
+    .callout {
+      background: var(--amber-bg);
+      border-left: 3px solid var(--amber-mid);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+      font-size: 13.5px;
+      color: var(--text-sec);
+      font-weight: 300;
+      line-height: 1.65;
+    }
+    .callout strong { color: var(--text); }
+
+    /* ── TAB SWITCHER ── */
+    .tab-group { margin: 1.5rem 0; }
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      border-bottom: 0.5px solid var(--border);
+      margin-bottom: 0;
+    }
+    .tab-btn {
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-ter);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      margin-bottom: -0.5px;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--amber-mid); }
+    .tab-btn:hover:not(.active) { color: var(--text-sec); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    @media (max-width: 480px) {
+      .wrap { padding: 2rem 1.25rem 4rem; }
+      .stats { gap: 8px; }
+      .insight-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav class="nav">
+  <a class="nav-back" href="../../index.html">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Portfolio
+  </a>
+  <span class="nav-crumb">Last-Mile Delivery Optimization</span>
+</nav>
+
+<main class="wrap">
+
+  <!-- ── HERO ── -->
+  <header class="hero">
+    <p class="hero-eyebrow">Operations Research · Consulting Case Study</p>
+    <h1 class="hero-title">Last-Mile Delivery<br>Optimization</h1>
+    <p class="hero-sub">
+      Prescriptive routing and driver assignment for Uber Eats — a four-part MIP progression
+      from single-driver routing to a real-time scalable heuristic across Toronto neighbourhoods.
+    </p>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-val">4</span>
+        <span class="stat-label">model generations</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">30.18 km</span>
+        <span class="stat-label">MILP optimal (5 orders)</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">1.1 ms</span>
+        <span class="stat-label">heuristic solve (15 orders)</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">36.6%</span>
+        <span class="stat-label">heuristic optimality gap</span>
+      </div>
+    </div>
+
+    <div class="tags">
+      <span class="tag tag-amber">Mixed-Integer Programming</span>
+      <span class="tag tag-green">Vehicle Routing</span>
+      <span class="tag tag-blue">Python · PuLP · Gurobi</span>
+      <span class="tag tag-purple">Prescriptive Analytics</span>
+      <span class="tag tag-amber">Folium · Spatial Viz</span>
+      <span class="tag tag-green">Operations Research</span>
+    </div>
+  </header>
+
+  <hr />
+
+  <!-- ── CONTEXT ── -->
+  <section>
+    <p class="section-label">Business context</p>
+    <h2 class="section-title">The last-mile cost problem</h2>
+    <p class="prose">
+      Uber Eats, DoorDash, and SkipTheDishes collectively move billions of dollars in food orders yet
+      have never reported a profit. The single largest controllable cost is driver distance — base fares
+      are tied to kilometres driven, making routing efficiency the primary operational lever available
+      to platform operators.
+    </p>
+    <p class="prose">
+      This project was developed as consultants for Uber Eats' data analytics group (RSM 8443,
+      Rotman School of Management, Winter 2026). The goal: design a sequence of increasingly
+      realistic prescriptive models that minimise total delivery distance while honouring customer
+      service-level agreements on wait time.
+    </p>
+
+    <div class="callout">
+      <strong>Why prescriptive, not predictive?</strong> Predictive models forecast demand.
+      Prescriptive models make the actual routing decision — the output is a driver itinerary, not
+      a probability. This project sits entirely in the prescriptive analytics space, using
+      Mixed-Integer Linear Programming (MILP) as the core engine.
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── FOUR-PART TIMELINE ── -->
+  <section>
+    <p class="section-label">Methodology</p>
+    <h2 class="section-title">Four-part incremental model design</h2>
+    <p class="prose" style="margin-bottom:1.75rem">
+      Each part adds one real-world dimension to the model, building toward a deployable system.
+      This incremental approach mirrors how operations teams validate models before putting them
+      into production.
+    </p>
+
+    <div class="timeline">
+
+      <div class="tl-item">
+        <div class="tl-left">
+          <div class="tl-dot">I</div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-content">
+          <p class="tl-meta">Foundation</p>
+          <h3 class="part-title">Single-driver distance minimisation</h3>
+          <p class="prose">
+            Formulated a Travelling Salesman-style MILP for one driver starting from
+            Downtown Toronto (Rosedale). The driver may carry multiple orders simultaneously;
+            the model finds the sequence of restaurant pick-ups and neighbourhood drop-offs
+            that minimises total kilometres driven.
+          </p>
+          <p class="prose" style="margin-top:0.5rem">
+            Subtour-elimination constraints (Miller–Tucker–Zemlin style) were added to enforce
+            a single connected route. The model was validated on two instances of increasing size.
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:0.75rem">
+            <div class="tl-result"><span class="r-label">Instance A</span><span class="r-val">4.71 km · 2 orders</span></div>
+            <div class="tl-result"><span class="r-label">Instance B</span><span class="r-val">33.91 km · 5 orders</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-left">
+          <div class="tl-dot">II</div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-content">
+          <p class="tl-meta">Time constraints</p>
+          <h3 class="part-title">Wait-budget SLA enforcement</h3>
+          <p class="prose">
+            Added a time dimension: each restaurant has a food-release timestamp, and customer
+            wait time is defined as the gap between food being ready and the driver arriving at
+            the customer's door. A Big-M formulation linearises the conditional arrival-time
+            constraints, with a parameter W capping the maximum average wait across all orders.
+          </p>
+          <p class="prose" style="margin-top:0.5rem">
+            Tested both an <em>average-wait</em> constraint (T4a) and a stricter
+            <em>max-wait</em> constraint (T4b), comparing their effect on solution distance and
+            feasibility. The max-wait formulation is a strict subset of avg-wait, requiring
+            a wider W to find feasible solutions but protecting individual customers from
+            extreme delays.
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:0.75rem">
+            <div class="tl-result"><span class="r-label">Instance A · W=60</span><span class="r-val">43.32 km · avg wait 12.3 min</span></div>
+            <div class="tl-result"><span class="r-label">Instance B · W=60</span><span class="r-val">55.63 km · avg wait 58.4 min</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-left">
+          <div class="tl-dot">III</div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-content">
+          <p class="tl-meta">Multi-driver assignment</p>
+          <h3 class="part-title">Joint order assignment & routing</h3>
+          <p class="prose">
+            Generalised the Part II model to multiple drivers with heterogeneous speeds
+            and starting locations. The MILP now simultaneously assigns orders to drivers
+            and routes each driver — the core decision problem Uber Eats solves in practice.
+          </p>
+          <p class="prose" style="margin-top:0.5rem">
+            A W × D sweep (driver cap × wait budget) over 90 problem instances revealed
+            the precise trade-off surface: more drivers reduce distance but increase operational
+            cost, while tighter W forces longer routes to rearrange delivery sequences.
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:0.75rem">
+            <div class="tl-result"><span class="r-label">D≤3 · W=60</span><span class="r-val">30.18 km · 2 drivers deployed</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-left">
+          <div class="tl-dot">IV</div>
+        </div>
+        <div class="tl-content">
+          <p class="tl-meta">Scalable heuristic</p>
+          <h3 class="part-title">Cluster-then-route real-time heuristic</h3>
+          <p class="prose">
+            MILPs don't scale: the 15-order large instance is intractable for exact solvers
+            within operational time windows. The cluster-then-route heuristic decomposes the
+            problem in three phases: (1) geographically cluster orders, (2) assign clusters
+            to drivers, (3) solve a small per-driver routing MILP with an optional max-wait
+            repair pass.
+          </p>
+          <p class="prose" style="margin-top:0.5rem">
+            Benchmarked against the Part III MILP optimal on the small instance, then applied
+            to the large instance. Designed to run online — it only uses orders currently in
+            the system, matching how Uber Eats actually operates.
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:0.75rem">
+            <div class="tl-result"><span class="r-label">Small · W=120</span><span class="r-val">41.22 km heuristic vs 30.18 km MILP (36.6% gap)</span></div>
+            <div class="tl-result"><span class="r-label">Large · W=120</span><span class="r-val">83.90 km · 7/10 drivers · 1.1 ms</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── MAP SECTION ── -->
+  <section>
+    <p class="section-label">Route visualizations · Interactive maps</p>
+    <h2 class="section-title">Optimal routes across Toronto</h2>
+    <p class="prose" style="margin-bottom:1.25rem">
+      Each map is the actual solver output rendered over real Toronto neighbourhood centroids.
+      Hover any marker for arrival time and wait details. Use the tabs to compare
+      single-driver vs. multi-driver solutions.
+    </p>
+
+    <div class="tab-group">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab(this,'tab-p1')">Part I · Single driver</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-p3')">Part III · 3 drivers</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-p4')">Part IV · 10 drivers</button>
+      </div>
+
+      <div id="tab-p1" class="tab-panel active">
+        <div class="map-frame-wrap">
+          <div class="map-label">
+            <span><span class="map-dot"></span>Part I — Instance B · 5 orders · single driver</span>
+            <span style="color:var(--text-ter)">33.91 km optimal</span>
+          </div>
+          <iframe src="../../projects/hot-delivery/figures/map_part1_B.html" title="Part I single-driver route map"></iframe>
+          <div class="map-caption">
+            Optimal single-driver route minimising total distance across 5 restaurant–customer pairs.
+            Driver starts and ends in downtown Rosedale. Subtour-elimination constraints ensure a single connected tour.
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-p3" class="tab-panel">
+        <div class="map-frame-wrap">
+          <div class="map-label">
+            <span><span class="map-dot"></span>Part III — Small instance · D≤3 · W=60 min</span>
+            <span style="color:var(--text-ter)">30.18 km · 2 drivers deployed</span>
+          </div>
+          <iframe src="../../projects/hot-delivery/figures/map_part3_small_D3_W60.html" title="Part III multi-driver route map"></iframe>
+          <div class="map-caption">
+            MILP-optimal joint assignment and routing for up to 3 drivers with heterogeneous speeds.
+            Colour-coded routes per driver. Only 2 drivers are deployed — the model correctly determines
+            the third is not needed to meet the W=60 min SLA.
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-p4" class="tab-panel">
+        <div class="map-frame-wrap">
+          <div class="map-label">
+            <span><span class="map-dot"></span>Part IV — Large instance · 10 drivers · heuristic · W=120 min</span>
+            <span style="color:var(--text-ter)">83.90 km · 7/10 drivers deployed</span>
+          </div>
+          <iframe src="../../projects/hot-delivery/figures/map_part4_large_avgrepair.html" title="Part IV large-scale heuristic route map"></iframe>
+          <div class="map-caption">
+            Cluster-then-route heuristic applied to 15 orders and 10 available drivers.
+            Solved in 1.1 ms — suitable for online re-dispatching when a driver cancels mid-shift.
+            Dark-red markers flag orders exceeding the 120-minute SLA.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── TRADE-OFF CHARTS ── -->
+  <section>
+    <p class="section-label">Analysis · Trade-off curves</p>
+    <h2 class="section-title">Distance vs. service level</h2>
+    <p class="prose" style="margin-bottom:1.25rem">
+      These charts answer a core managerial question: <em>how much does it cost to serve customers faster?</em>
+      The step-function shape reveals that distance is not continuously sensitive to W — there are
+      discrete routing changes where a tighter budget forces a fundamentally different sequence.
+    </p>
+
+    <div class="chart-wrap">
+      <img src="../../projects/hot-delivery/figures/part3_tradeoff_WD.png"
+           alt="Part III W vs total distance by fleet size" />
+      <div class="chart-caption">
+        Part III — W (wait budget) vs total distance, by driver cap (D≤1, D≤2, D≤3).
+        The full fleet (blue) achieves a 30 km floor at W≥60. A single driver (red) cannot
+        feasibly serve all orders below W=30 min regardless of route choice.
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <img src="../../projects/hot-delivery/figures/part2_tradeoff.png"
+           alt="Part II W vs total distance — avg-wait vs max-wait" />
+      <div class="chart-caption">
+        Part II — Average-wait (solid) vs max-wait (dashed) constraint comparison.
+        Max-wait requires a wider W to remain feasible, but protects the worst-off customer.
+        Instance B (right) shows greater distance sensitivity because orders are more
+        geographically dispersed and release times vary widely.
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── RESULTS TABLE ── -->
+  <section>
+    <p class="section-label">Summary results</p>
+    <h2 class="section-title">Key outcomes across all parts</h2>
+
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Part</th>
+          <th>Instance</th>
+          <th>Configuration</th>
+          <th>Distance</th>
+          <th>Avg wait</th>
+          <th>Method</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>I</td>
+          <td>A</td>
+          <td>1 driver · 2 orders</td>
+          <td class="num">4.71 km</td>
+          <td>—</td>
+          <td><span class="badge badge-blue">MILP</span></td>
+        </tr>
+        <tr>
+          <td>I</td>
+          <td>B</td>
+          <td>1 driver · 5 orders</td>
+          <td class="num">33.91 km</td>
+          <td>—</td>
+          <td><span class="badge badge-blue">MILP</span></td>
+        </tr>
+        <tr>
+          <td>II</td>
+          <td>A</td>
+          <td>1 driver · W=60 min</td>
+          <td class="num">43.32 km</td>
+          <td class="num">12.3 min</td>
+          <td><span class="badge badge-blue">MILP</span></td>
+        </tr>
+        <tr>
+          <td>II</td>
+          <td>B</td>
+          <td>1 driver · W=60 min</td>
+          <td class="num">55.63 km</td>
+          <td class="num">58.4 min</td>
+          <td><span class="badge badge-blue">MILP</span></td>
+        </tr>
+        <tr>
+          <td>III</td>
+          <td>Small</td>
+          <td>D≤3 · W=60 min · 2 deployed</td>
+          <td class="num">30.18 km</td>
+          <td class="num">&lt;60 min</td>
+          <td><span class="badge badge-blue">MILP</span></td>
+        </tr>
+        <tr>
+          <td>IV</td>
+          <td>Small</td>
+          <td>D≤3 · W=120 min · heuristic</td>
+          <td class="num">41.22 km</td>
+          <td>—</td>
+          <td><span class="badge badge-amber">Heuristic (+36.6%)</span></td>
+        </tr>
+        <tr>
+          <td>IV</td>
+          <td>Large</td>
+          <td>10 drivers · W=120 min · 7 deployed</td>
+          <td class="num">83.90 km</td>
+          <td>—</td>
+          <td><span class="badge badge-green">Heuristic · 1.1 ms</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr />
+
+  <!-- ── INSIGHTS ── -->
+  <section>
+    <p class="section-label">Managerial insights</p>
+    <h2 class="section-title">What this tells operations teams</h2>
+
+    <div class="insight-grid">
+      <div class="insight-card">
+        <div class="insight-icon">📉</div>
+        <div class="insight-head">Fleet size has diminishing returns</div>
+        <div class="insight-body">Going from 1 to 2 drivers cuts distance by ~15 km; a 3rd driver saves only ~4 km more. Deploying more drivers has a cost — the model finds the minimum fleet needed.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon">⚡</div>
+        <div class="insight-head">W is a discontinuous lever</div>
+        <div class="insight-body">Distance doesn't change smoothly with W — it drops in steps. Tightening SLAs from 60→50 min may have zero cost, but 50→40 min could force a 15 km detour.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon">🛡️</div>
+        <div class="insight-head">Avg-wait hides unfairness</div>
+        <div class="insight-body">Average-wait constraints allow one customer to wait 90 min if others wait 10 min. The max-wait formulation prevents this — relevant for platform trust and ratings.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon">🔄</div>
+        <div class="insight-head">Online re-dispatch needs heuristics</div>
+        <div class="insight-body">When a driver cancels, Uber Eats must re-route in milliseconds. The heuristic's 1.1 ms solve time makes it viable for real-time dispatch loops; MILP is not.</div>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── SKILLS ── -->
+  <section>
+    <p class="section-label">Skills demonstrated</p>
+    <div class="skills-wrap">
+      <p class="prose">This project spans the full analytics-to-deployment arc for an operations research problem.</p>
+      <div class="skills-grid">
+        <div class="skill-item">
+          <div class="skill-bullet"></div>
+          <div class="skill-text"><strong>MILP formulation</strong> — decision variables, Big-M linearisation, subtour elimination</div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-bullet"></div>
+          <div class="skill-text"><strong>PuLP + Gurobi</strong> — solver configuration, gap tolerance, time limits</div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-bullet"></div>
+          <div class="skill-text"><strong>Vehicle routing</strong> — multi-driver VRP with heterogeneous speeds and depots</div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-bullet"></div>
+          <div class="skill-text"><strong>Sensitivity analysis</strong> — W × D trade-off sweeps over 90+ parametric solves</div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-bullet"></div>
+          <div class="skill-text"><strong>Heuristic design</strong> — cluster-then-route with a max-wait repair phase</div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-bullet"></div>
+          <div class="skill-text"><strong>Spatial visualisation</strong> — Folium/Leaflet interactive maps over Toronto geodata</div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-bullet"></div>
+          <div class="skill-text"><strong>Python</strong> — pandas, numpy, matplotlib, modular notebook architecture</div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-bullet"></div>
+          <div class="skill-text"><strong>Prescriptive analytics</strong> — translating business SLAs into mathematical constraints</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── LINKS ── -->
+  <div class="link-row">
+    <a class="link-btn link-btn-primary" href="https://github.com/HzyBetty/hot-delivery-optimization" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+      View on GitHub
+    </a>
+    <a class="link-btn link-btn-secondary" href="../../projects/hot-delivery/report/Hot_Delivery_Report.pdf" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Full Report (PDF)
+    </a>
+    <a class="link-btn link-btn-secondary" href="https://nbviewer.org/github/HzyBetty/hot-delivery/blob/main/notebook.ipynb" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      View Notebook
+    </a>
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer">
+    <span class="footer-note">RSM 8443 · Rotman School of Management · Winter 2026</span>
+    <a class="footer-link" href="../../index.html">← Back to portfolio</a>
+  </footer>
+
+</main>
+
+<script>
+  function switchTab(btn, panelId) {
+    // Deactivate all
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    // Activate selected
+    btn.classList.add('active');
+    document.getElementById(panelId).classList.add('active');
+  }
+</script>
+
+</body>
+</html>
