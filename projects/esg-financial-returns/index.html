@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ESG & Financial Returns · Zhongyi Hu</title>
+  <meta name="description" content="Empirical analysis of ESG performance and financial returns across 18,443 firm-years using CRSP, Compustat, and Refinitiv ESG data." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #FFFDF9;
+      --bg-card:   #FFFFFF;
+      --bg-muted:  #F7F4EF;
+      --text:      #1C1A17;
+      --text-sec:  #6B6559;
+      --text-ter:  #A09890;
+      --border:    rgba(60,50,30,0.12);
+      --border-md: rgba(60,50,30,0.22);
+      --amber-bg:  #FAF0E8;
+      --amber-tag: #854F0B;
+      --green-bg:  #EAF3DE;
+      --green-tag: #3B6D11;
+      --blue-bg:   #E6F1FB;
+      --blue-tag:  #185FA5;
+      --purple-bg: #F0EDFB;
+      --purple-tag:#5B3DA8;
+      --red-bg:    #FBEAEA;
+      --red-tag:   #8B1A1A;
+      --radius-sm: 5px;
+      --radius-md: 8px;
+      --radius-lg: 14px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:        #1A1714;
+        --bg-card:   #221F1B;
+        --bg-muted:  #2A2620;
+        --text:      #F0EBE3;
+        --text-sec:  #A8A098;
+        --text-ter:  #6A6258;
+        --border:    rgba(255,240,210,0.10);
+        --border-md: rgba(255,240,210,0.20);
+        --amber-bg:  #2E1F0A;
+        --amber-tag: #FAC775;
+        --green-bg:  #0E1F08;
+        --green-tag: #C0DD97;
+        --blue-bg:   #081828;
+        --blue-tag:  #85B7EB;
+        --purple-bg: #1A1230;
+        --purple-tag:#A78BFA;
+        --red-bg:    #1E0A0A;
+        --red-tag:   #F08080;
+      }
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.65;
+    }
+
+    /* ── Layout ── */
+    .wrap { max-width: 820px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+
+    /* ── Back nav ── */
+    .back {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text-ter);
+      text-decoration: none; margin-bottom: 2rem;
+      transition: color 0.15s;
+    }
+    .back:hover { color: var(--text-sec); }
+
+    /* ── Header ── */
+    .project-label {
+      font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-ter); margin-bottom: 0.45rem;
+    }
+    h1 {
+      font-family: 'Lora', serif;
+      font-size: clamp(22px, 4.5vw, 32px);
+      font-weight: 500; line-height: 1.2;
+      color: var(--text); margin-bottom: 0.6rem;
+    }
+    .subtitle {
+      font-size: 15px; color: var(--text-sec); font-weight: 300;
+      max-width: 600px; line-height: 1.6;
+    }
+
+    /* ── Tags ── */
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 1.25rem 0; }
+    .tag {
+      font-size: 10.5px; letter-spacing: 0.04em; font-weight: 500;
+      padding: 3px 10px; border-radius: 99px;
+    }
+    .tag-amber  { background: var(--amber-bg);  color: var(--amber-tag); }
+    .tag-green  { background: var(--green-bg);  color: var(--green-tag); }
+    .tag-blue   { background: var(--blue-bg);   color: var(--blue-tag);  }
+    .tag-purple { background: var(--purple-bg); color: var(--purple-tag);}
+    .tag-muted  { background: var(--bg-muted);  color: var(--text-ter);  }
+    .tag-red    { background: var(--red-bg);    color: var(--red-tag);   }
+
+    hr { border: none; border-top: 0.5px solid var(--border); margin: 2rem 0; }
+
+    /* ── Section ── */
+    .section-label {
+      font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-ter); margin-bottom: 1rem;
+    }
+
+    /* ── Stat strip ── */
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1px;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 2.5rem;
+    }
+    .stat-cell {
+      background: var(--bg-card);
+      padding: 1.1rem 1.3rem;
+      border-right: 0.5px solid var(--border);
+    }
+    .stat-cell:last-child { border-right: none; }
+    .stat-value {
+      font-family: 'Lora', serif;
+      font-size: 22px; font-weight: 500;
+      color: var(--text); line-height: 1.1; margin-bottom: 0.2rem;
+    }
+    .stat-label { font-size: 11px; color: var(--text-ter); font-weight: 300; }
+
+    /* ── Section prose ── */
+    .section-title {
+      font-family: 'Lora', serif;
+      font-size: 18px; font-weight: 500;
+      color: var(--text); margin-bottom: 0.65rem;
+    }
+    p { font-size: 14px; color: var(--text-sec); line-height: 1.75; margin-bottom: 1rem; }
+    p:last-child { margin-bottom: 0; }
+
+    /* ── Finding cards ── */
+    .findings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+    .finding-card {
+      background: var(--bg-card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.1rem 1.25rem;
+    }
+    .finding-q {
+      font-size: 11.5px; color: var(--text-ter); font-weight: 400;
+      margin-bottom: 0.35rem; line-height: 1.4;
+    }
+    .finding-a {
+      font-size: 13.5px; color: var(--text); font-weight: 500;
+      line-height: 1.45;
+    }
+    .finding-detail {
+      font-size: 12px; color: var(--text-sec); font-weight: 300;
+      margin-top: 0.4rem; line-height: 1.5;
+    }
+
+    /* ── Figure blocks ── */
+    .figure-block {
+      background: var(--bg-card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .figure-block img {
+      width: 100%; display: block;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .figure-caption {
+      padding: 0.9rem 1.2rem;
+    }
+    .figure-caption .cap-title {
+      font-size: 12.5px; font-weight: 500; color: var(--text);
+      margin-bottom: 0.25rem;
+    }
+    .figure-caption .cap-body {
+      font-size: 12px; color: var(--text-sec); font-weight: 300;
+      line-height: 1.6; margin: 0;
+    }
+
+    /* ── Pipeline steps ── */
+    .pipeline {
+      display: flex; flex-direction: column; gap: 0;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .pipe-step {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 0.5px solid var(--border);
+      background: var(--bg-card);
+    }
+    .pipe-step:last-child { border-bottom: none; }
+    .pipe-num {
+      font-family: 'Lora', serif;
+      font-size: 15px; font-weight: 500; color: var(--text-ter);
+      min-width: 20px; padding-top: 1px;
+    }
+    .pipe-content { flex: 1; }
+    .pipe-title {
+      font-size: 13.5px; font-weight: 500; color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+    .pipe-desc { font-size: 12.5px; color: var(--text-sec); font-weight: 300; line-height: 1.55; margin: 0; }
+    .pipe-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.5rem; }
+    .pipe-tag {
+      font-size: 10px; padding: 1px 8px; border-radius: 99px;
+      font-weight: 500;
+    }
+
+    /* ── Results table ── */
+    .result-table {
+      width: 100%; border-collapse: collapse; margin-bottom: 2rem;
+      font-size: 13px;
+    }
+    .result-table th {
+      text-align: left; padding: 0.6rem 0.9rem;
+      font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-ter); font-weight: 500;
+      border-bottom: 0.5px solid var(--border);
+      background: var(--bg-muted);
+    }
+    .result-table td {
+      padding: 0.65rem 0.9rem;
+      color: var(--text-sec); font-weight: 300;
+      border-bottom: 0.5px solid var(--border);
+      vertical-align: top;
+    }
+    .result-table tr:last-child td { border-bottom: none; }
+    .result-table .td-label { color: var(--text); font-weight: 500; font-size: 13px; }
+    .result-table .td-val { font-family: 'Lora', serif; color: var(--text); font-size: 13.5px; }
+    .sig { color: var(--green-tag); }
+    .insig { color: var(--text-ter); }
+
+    /* ── Code snippet ── */
+    .code-block {
+      background: var(--bg-muted);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.2rem;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 11.5px; color: var(--text-sec);
+      line-height: 1.7;
+      overflow-x: auto;
+      margin-bottom: 1.5rem;
+    }
+    .code-block .kw  { color: #8B72C8; }
+    .code-block .fn  { color: #5B8FCC; }
+    .code-block .str { color: #5DB06B; }
+    .code-block .cm  { color: var(--text-ter); font-style: italic; }
+
+    /* ── Takeaway callout ── */
+    .callout {
+      background: var(--green-bg);
+      border: 0.5px solid rgba(59,109,17,0.25);
+      border-radius: var(--radius-lg);
+      padding: 1.1rem 1.4rem;
+      margin-bottom: 2rem;
+    }
+    .callout-label {
+      font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--green-tag); font-weight: 500; margin-bottom: 0.4rem;
+    }
+    .callout p { font-size: 13.5px; color: var(--text); margin: 0; line-height: 1.6; }
+
+    /* ── Links row ── */
+    .links-row {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-top: 1.5rem;
+    }
+    .link-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12.5px; color: var(--text-sec);
+      background: var(--bg-card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0.45rem 0.9rem;
+      text-decoration: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .link-btn:hover { border-color: var(--border-md); color: var(--text); }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 3rem;
+      padding-top: 1.25rem;
+      border-top: 0.5px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 0.5rem;
+    }
+    .footer-note { font-size: 12px; color: var(--text-ter); }
+
+    @media (max-width: 520px) {
+      .wrap { padding: 2rem 1.25rem 3.5rem; }
+      .stat-strip { grid-template-columns: repeat(2, 1fr); }
+      .findings-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- Back nav -->
+  <a class="back" href="../../index.html">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back to portfolio
+  </a>
+
+  <!-- Header -->
+  <p class="project-label">Group Research Project · RSM 8224 · Rotman / UofT</p>
+  <h1>ESG Performance &<br>Financial Returns</h1>
+  <p class="subtitle">Panel econometrics study on whether doing good means doing well — integrating three institutional databases across 3,086 U.S. firms over 2013–2023.</p>
+
+  <div class="tags">
+    <span class="tag tag-blue">Python · SQL</span>
+    <span class="tag tag-purple">Panel Econometrics</span>
+    <span class="tag tag-green">CRSP · Compustat · Refinitiv</span>
+    <span class="tag tag-amber">Feature Engineering</span>
+    <span class="tag tag-muted">OLS / PanelOLS</span>
+    <span class="tag tag-muted">Data Pipeline</span>
+  </div>
+
+  <!-- Stat strip -->
+  <div class="stat-strip">
+    <div class="stat-cell">
+      <div class="stat-value">18,443</div>
+      <div class="stat-label">firm-year observations</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value">3,086</div>
+      <div class="stat-label">unique U.S. firms</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value">11 yrs</div>
+      <div class="stat-label">panel depth, 2013–2023</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value">3 DBs</div>
+      <div class="stat-label">CRSP + Compustat + Refinitiv</div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ── SECTION: Key Findings ── -->
+  <p class="section-label">Key findings</p>
+
+  <div class="findings-grid">
+    <div class="finding-card">
+      <p class="finding-q">Does ESG predict future profitability (ROA)?</p>
+      <p class="finding-a">No — after controls</p>
+      <p class="finding-detail">A strong unconditional ESG–ROA correlation (R² 0.054 → 0.509) vanishes entirely once firm size, leverage, and fixed effects are added. ESG proxies for firm quality, not operational alpha.</p>
+    </div>
+    <div class="finding-card">
+      <p class="finding-q">Does ESG predict stock returns?</p>
+      <p class="finding-a">Yes — conditionally</p>
+      <p class="finding-detail">Unconditional coefficient is negative (size bias). After size/value controls: +0.0008 (p=0.002). A 1 SD increase in ESG ≈ +1.5 pp annual return. Disappears under firm FE → cross-sectional signal only.</p>
+    </div>
+    <div class="finding-card">
+      <p class="finding-q">What is the dominant driver of ESG scores?</p>
+      <p class="finding-a">Firm size (+7.1 pts/log unit)</p>
+      <p class="finding-detail">Size is stable across all specs (M1: +6.68, M2: +7.11). R&D flips to −11.0 after FE, revealing a within-industry trade-off: innovation and ESG compete for the same discretionary budget.</p>
+    </div>
+    <div class="finding-card">
+      <p class="finding-q">Best sector for ESG-conscious investors?</p>
+      <p class="finding-a">Shops (Wholesale/Retail)</p>
+      <p class="finding-detail">The only FF-12 industry that is a double materiality winner on both BHR (18.3%) and ROA (5.5%). Supply chain management structurally links ESG and profitability — not coincidental momentum.</p>
+    </div>
+  </div>
+
+  <!-- Double materiality figure -->
+  <div class="figure-block">
+    <img src="assets/esg_quadrant.png" alt="Double Materiality Quadrant: ESG vs Stock Returns by industry" loading="lazy" />
+    <div class="figure-caption">
+      <p class="cap-title">Figure 1 — Double Materiality Quadrant (ESG vs. 12-Month Buy-and-Hold Return)</p>
+      <p class="cap-body">Bubble size proportional to firm-year observations. Dashed lines = cross-industry medians (ESG = 41.6; BHR = 16.6%). HiTec and Shops qualify as double materiality winners on BHR; only Shops wins on both BHR and ROA. HiTec's alignment is momentum-driven; Shops' is structural.</p>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ── SECTION: Sign Reversal ── -->
+  <p class="section-label">Analytical highlight</p>
+  <h2 class="section-title">The ESG → Returns Sign Reversal</h2>
+  <p>This is the core finding that distinguishes this analysis from a naive ESG study. In the raw data, the ESG–return relationship appears slightly negative — because high-ESG firms tend to be large, low-book-to-market firms, which are exactly the firms expected to earn lower returns (the size and value premia work against them).</p>
+  <p>Once those confounders are removed, a hidden positive signal emerges: among firms of comparable size and valuation, higher-ESG firms earn modestly but significantly higher conditional returns. This reversal is the opposite of the ROA channel, where controls eliminate an initially positive correlation.</p>
+
+  <div class="figure-block">
+    <img src="assets/esg_returns_sign_reversal.png" alt="ESG returns sign reversal across model specifications" loading="lazy" />
+    <div class="figure-caption">
+      <p class="cap-title">Figure 2 — ESG Coefficient on 12-Month BHR Across Specifications</p>
+      <p class="cap-body">Hatched bars = not significant. The unconditional negative coefficient (M1) flips positive and significant (p=0.002) once size, value, and fixed effects are added. The signal survives momentum controls (M5, p=0.012) but disappears under firm FE — confirming ESG as a cross-sectional sorting variable, not a timing signal.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p class="callout-label">Key insight for operations &amp; analytics</p>
+    <p>This is a textbook example of <strong>omitted variable bias identification and correction</strong> — a skill directly transferable to any analytics role where raw correlations mislead without proper controls. The same logic applies to A/B test confounders, attribution modeling, and causal inference in operational data.</p>
+  </div>
+
+  <hr />
+
+  <!-- ── SECTION: Data Pipeline ── -->
+  <p class="section-label">Data pipeline</p>
+  <h2 class="section-title">End-to-End from Institutional Databases to Panel Dataset</h2>
+  <p>The most technically demanding contribution of this project is integrating three institutional-grade databases that use incompatible identifier systems, requiring a multi-step linking strategy used by professional quant research teams.</p>
+
+  <div class="figure-block" style="margin-bottom:1.5rem;">
+    <img src="assets/pipeline.png" alt="Data pipeline: SQL → Merge → Feature Engineering → Regression → Industry Analysis" loading="lazy" />
+    <div class="figure-caption">
+      <p class="cap-title">Figure 3 — End-to-end data pipeline</p>
+      <p class="cap-body">Five-stage workflow from raw WRDS database queries through panel construction to prescriptive industry-level recommendations.</p>
+    </div>
+  </div>
+
+  <div class="pipeline">
+    <div class="pipe-step">
+      <span class="pipe-num">01</span>
+      <div class="pipe-content">
+        <p class="pipe-title">SQL Acquisition on WRDS</p>
+        <p class="pipe-desc">Queried three separate institutional databases via raw SQL: Refinitiv ESG scores (tr_esg.esgscores), Compustat annual fundamentals (comp.funda), and CRSP monthly returns (crsp.msf + crsp.msenames). Applied sample filters in-database to restrict to domestic common stocks on NYSE/AMEX/NASDAQ.</p>
+        <div class="pipe-tags">
+          <span class="pipe-tag tag-blue">SQL</span>
+          <span class="pipe-tag tag-muted">WRDS API</span>
+          <span class="pipe-tag tag-muted">PostgreSQL</span>
+        </div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <span class="pipe-num">02</span>
+      <div class="pipe-content">
+        <p class="pipe-title">Multi-Source Database Merging</p>
+        <p class="pipe-desc">Navigating three incompatible identifier systems: CRSP↔Compustat via the CCM link table with date-range validation; ESG↔Compustat via CUSIP extracted from ISIN (isin[2:10]) bridged through wrds_ref_esg. Applied linktype and linkprim filters to handle firm identity changes over time.</p>
+        <div class="pipe-tags">
+          <span class="pipe-tag tag-amber">Multi-key joins</span>
+          <span class="pipe-tag tag-muted">Temporal linking</span>
+          <span class="pipe-tag tag-muted">CUSIP/ISIN mapping</span>
+        </div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <span class="pipe-num">03</span>
+      <div class="pipe-content">
+        <p class="pipe-title">Feature Engineering &amp; Panel Construction</p>
+        <p class="pipe-desc">Constructed all regression variables: ROA, operating ROA, buy-and-hold returns (4-month lag to avoid look-ahead bias), book-to-market, leverage, R&D intensity, sales growth. Winsorized at 1st/99th percentiles. Generated lagged variables with proper panel alignment. Assigned Fama-French 12 classifications via SIC codes.</p>
+        <div class="pipe-tags">
+          <span class="pipe-tag tag-green">pandas / numpy</span>
+          <span class="pipe-tag tag-muted">Winsorization</span>
+          <span class="pipe-tag tag-muted">Bias prevention</span>
+        </div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <span class="pipe-num">04</span>
+      <div class="pipe-content">
+        <p class="pipe-title">Regression Analysis (OLS + Panel FE)</p>
+        <p class="pipe-desc">Progressive model sequences in both accounting (ROA) and returns channels. Used statsmodels for OLS with HC1 robust SEs, and linearmodels.PanelOLS for within-firm estimation with firm and year fixed effects. Identified and documented omitted variable bias through side-by-side coefficient comparisons.</p>
+        <div class="pipe-tags">
+          <span class="pipe-tag tag-purple">statsmodels</span>
+          <span class="pipe-tag tag-purple">linearmodels</span>
+          <span class="pipe-tag tag-muted">Fixed effects</span>
+          <span class="pipe-tag tag-muted">HC1 SEs</span>
+        </div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <span class="pipe-num">05</span>
+      <div class="pipe-content">
+        <p class="pipe-title">Industry-Level Double Materiality Analysis</p>
+        <p class="pipe-desc">Aggregated to FF-12 industry level. Classified each industry into a double materiality quadrant using cross-industry medians. Decomposed composite ESG into E/S/G pillars to distinguish structural from coincidental alignment. Produced actionable investment recommendation with statistical backing.</p>
+        <div class="pipe-tags">
+          <span class="pipe-tag tag-amber">Prescriptive analytics</span>
+          <span class="pipe-tag tag-muted">Quadrant analysis</span>
+          <span class="pipe-tag tag-muted">matplotlib / seaborn</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Code snippet -->
+  <p class="section-label">Sample: CCM link table merge</p>
+  <div class="code-block">
+<span class="cm"># Temporal link validation — handles firm identity changes over time</span>
+ccm_link = conn.raw_sql(<span class="str">"""
+    SELECT gvkey, lpermno AS permno, linktype, linkprim,
+           linkdt, linkenddt
+    FROM crsp_a_ccm.ccmxpf_linktable
+    WHERE linktype IN ('LC', 'LU', 'LS')
+      AND linkprim IN ('C', 'P')
+"""</span>)
+
+<span class="cm"># Date-range filter: datadate must fall within valid link window</span>
+comp_linked = comp_linked[
+    (comp_linked[<span class="str">'datadate'</span>] >= comp_linked[<span class="str">'linkdt'</span>]) &amp;
+    (comp_linked[<span class="str">'datadate'</span>] &lt;= comp_linked[<span class="str">'linkenddt'</span>])
+]
+
+<span class="cm"># ESG ↔ Compustat: extract 8-digit CUSIP from ISIN (chars 3–10)</span>
+<span class="kw">UPPER</span>(<span class="fn">SUBSTRING</span>(r.isin <span class="kw">FROM</span> 3 <span class="kw">FOR</span> 8)) <span class="kw">AS</span> cusip8
+  </div>
+
+  <hr />
+
+  <!-- ── SECTION: Industry Analysis ── -->
+  <p class="section-label">Industry analysis</p>
+  <h2 class="section-title">ESG Pillar Breakdown &amp; U-Shaped Trend</h2>
+  <p>Cross-industry heterogeneity explains why aggregate ESG–return studies often find weak results. ESG is financially material in sectors where sustainability is operationally inseparable from value creation, and irrelevant (or misleading) in others.</p>
+
+  <div class="figure-block">
+    <img src="assets/esg_industry_pillars.png" alt="ESG pillar breakdown by FF-12 industry" loading="lazy" />
+    <div class="figure-caption">
+      <p class="cap-title">Figure 4 — ESG Pillar Breakdown by FF-12 Industry (sorted by composite ESG)</p>
+      <p class="cap-body">Governance consistently dominates all industries (mean = 48.1), reflecting mandatory board structures. Environmental shows the widest dispersion (21–45), driven by differential disclosure obligations. Shops (highlighted) leads on both overall ESG and profitability — a unique structural alignment.</p>
+    </div>
+  </div>
+
+  <div class="figure-block">
+    <img src="assets/esg_trend.png" alt="ESG pillar trends 2013-2023 showing U-shaped pattern" loading="lazy" />
+    <div class="figure-caption">
+      <p class="cap-title">Figure 5 — ESG Pillar Trends 2013–2023</p>
+      <p class="cap-body">U-shaped pattern: ESG scores declined 2013–2017 as lower-disclosure firms entered the dataset (composition effect, not performance deterioration), then rose steadily post-2017 under regulatory pressure and growing investor demand. Distinguishing this from genuine performance improvement required careful sample analysis.</p>
+    </div>
+  </div>
+
+  <!-- Industry table -->
+  <p class="section-label">Industry summary statistics</p>
+  <table class="result-table">
+    <thead>
+      <tr>
+        <th>Industry</th>
+        <th>ESG</th>
+        <th>BHR (mean)</th>
+        <th>ROA (mean)</th>
+        <th>Classification</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="td-label">Shops (Retail) ★</td>
+        <td class="td-val">42.6</td>
+        <td class="td-val sig">18.3%</td>
+        <td class="td-val sig">5.5%</td>
+        <td><span class="tag tag-green" style="font-size:10px;">Double Materiality Winner</span></td>
+      </tr>
+      <tr>
+        <td class="td-label">HiTec</td>
+        <td class="td-val">43.5</td>
+        <td class="td-val sig">22.3%</td>
+        <td class="td-val insig">1.7%</td>
+        <td><span class="tag tag-green" style="font-size:10px;">Winner (BHR only)</span></td>
+      </tr>
+      <tr>
+        <td class="td-label">Utilities</td>
+        <td class="td-val">49.6</td>
+        <td class="td-val insig">11.3%</td>
+        <td class="td-val insig">1.6%</td>
+        <td><span class="tag tag-amber" style="font-size:10px;">ESG Leader, Finance Laggard</span></td>
+      </tr>
+      <tr>
+        <td class="td-label">Energy</td>
+        <td class="td-val">35.7</td>
+        <td class="td-val sig">20.2%</td>
+        <td class="td-val insig">−3.2%</td>
+        <td><span class="tag tag-blue" style="font-size:10px;">Finance Leader, ESG Laggard</span></td>
+      </tr>
+      <tr>
+        <td class="td-label">Consumer Durables</td>
+        <td class="td-val">35.7</td>
+        <td class="td-val insig">12.9%</td>
+        <td class="td-val insig">−17.9%</td>
+        <td><span class="tag tag-red" style="font-size:10px;">Double Laggard</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr />
+
+  <!-- ── SECTION: Skills demonstrated ── -->
+  <p class="section-label">Skills demonstrated</p>
+
+  <div class="findings-grid">
+    <div class="finding-card">
+      <p class="finding-q">Data Engineering</p>
+      <p class="finding-a">Multi-source institutional DB integration</p>
+      <p class="finding-detail">CCM link table navigation, CUSIP/ISIN reconciliation, temporal validity windows — same infrastructure used at buy-side firms and risk teams.</p>
+    </div>
+    <div class="finding-card">
+      <p class="finding-q">Causal Inference</p>
+      <p class="finding-a">Bias identification &amp; correction</p>
+      <p class="finding-detail">Documented and corrected omitted variable bias, look-ahead bias, and survivorship bias — critical for any production analytical model in operations or finance.</p>
+    </div>
+    <div class="finding-card">
+      <p class="finding-q">Panel Econometrics</p>
+      <p class="finding-a">Fixed effects, clustering, robust SEs</p>
+      <p class="finding-detail">OLS → Industry FE → Firm FE sequence; HC1 and firm-clustered standard errors; R² decomposition to isolate true signal from confounding factors.</p>
+    </div>
+    <div class="finding-card">
+      <p class="finding-q">Prescriptive Analytics</p>
+      <p class="finding-a">From data to actionable decision</p>
+      <p class="finding-detail">Double materiality quadrant translates empirical findings into a concrete investment recommendation — the final deliverable a decision-maker actually acts on.</p>
+    </div>
+  </div>
+
+  <!-- Links -->
+  <div class="links-row">
+    <a class="link-btn" href="https://github.com/HzyBetty/esg-financial-returns" target="_blank" rel="noopener">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+      View on GitHub
+    </a>
+    <a class="link-btn" href="Final_Project_Report.pdf" target="_blank">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      Full Report (PDF)
+    </a>
+    <a class="link-btn" href="Final_Project_Code.ipynb" target="_blank">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16,18 22,12 16,6"/><polyline points="8,6 2,12 8,18"/></svg>
+      Jupyter Notebook
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span class="footer-note">RSM 8224 · Rotman School of Management · University of Toronto · Winter 2026</span>
+  </footer>
+
+</main>
+</body>
+</html>
