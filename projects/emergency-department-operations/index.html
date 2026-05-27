@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ED Flow Intelligence · Zhongyi Hu</title>
+  <meta name="description" content="Process mining and ML dashboard for emergency department operations — Sankey flow maps, admission prediction, LOS simulation, and capacity planning." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#FFFDF9;--bg-card:#FFFFFF;--bg-muted:#F7F4EF;
+      --text:#1C1A17;--text-sec:#6B6559;--text-ter:#A09890;
+      --border:rgba(60,50,30,0.11);--border-md:rgba(60,50,30,0.22);
+      --amber-bg:#FAF0E8;--amber:#EF9F27;--amber-tag:#854F0B;
+      --green-bg:#EAF3DE;--green-tag:#3B6D11;
+      --blue-bg:#E6F1FB;--blue-tag:#185FA5;
+      --teal-bg:#E1F5EE;--teal-tag:#0F6E56;
+      --purple-bg:#F0EDFB;--purple-tag:#5B3DA8;
+      --red-bg:#FDECEA;--red-tag:#B91C1C;
+      --r-md:8px;--r-lg:14px;
+    }
+    @media(prefers-color-scheme:dark){:root{
+      --bg:#1A1714;--bg-card:#221F1B;--bg-muted:#2A2620;
+      --text:#F0EBE3;--text-sec:#A8A098;--text-ter:#6A6258;
+      --border:rgba(255,240,210,0.10);--border-md:rgba(255,240,210,0.20);
+      --amber-bg:#2E1F0A;--amber-tag:#FAC775;
+      --green-bg:#0E1F08;--green-tag:#C0DD97;
+      --blue-bg:#081828;--blue-tag:#85B7EB;
+      --teal-bg:#041F14;--teal-tag:#5DCAA5;
+      --purple-bg:#1A1230;--purple-tag:#A78BFA;
+      --red-bg:#2A0808;--red-tag:#FCA5A5;
+    }}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+    .wrap{max-width:740px;margin:0 auto;padding:2.5rem 1.75rem 5rem}
+
+    .back{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text-ter);text-decoration:none;margin-bottom:2.25rem;transition:color .15s}
+    .back:hover{color:var(--text-sec)}
+
+    .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem}
+    .tag{font-size:10px;letter-spacing:.05em;font-weight:500;padding:3px 10px;border-radius:99px}
+    .tag-amber {background:var(--amber-bg);color:var(--amber-tag)}
+    .tag-green {background:var(--green-bg);color:var(--green-tag)}
+    .tag-blue  {background:var(--blue-bg); color:var(--blue-tag)}
+    .tag-teal  {background:var(--teal-bg); color:var(--teal-tag)}
+    .tag-purple{background:var(--purple-bg);color:var(--purple-tag)}
+    .tag-red   {background:var(--red-bg);  color:var(--red-tag)}
+
+    h1{font-family:'Lora',serif;font-size:clamp(22px,4vw,32px);font-weight:500;line-height:1.2;margin-bottom:.75rem}
+    .hero-sub{font-size:15.5px;color:var(--text-sec);font-weight:300;max-width:600px;margin-bottom:1.75rem}
+
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:2.5rem}
+    .stat{background:var(--bg-muted);border-radius:var(--r-md);padding:.9rem 1rem}
+    .stat-label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-ter);margin-bottom:.25rem}
+    .stat-val{font-size:22px;font-weight:500;color:var(--text)}
+    .stat-note{font-size:11px;color:var(--text-ter);margin-top:.1rem}
+
+    hr{border:none;border-top:.5px solid var(--border);margin:2.25rem 0}
+    h2{font-family:'Lora',serif;font-size:19px;font-weight:500;margin-bottom:.6rem}
+    p{font-size:14.5px;color:var(--text-sec);margin-bottom:1rem;font-weight:300}
+    p:last-child{margin-bottom:0}
+
+    .chart-card{background:var(--bg-card);border:.5px solid var(--border);border-radius:var(--r-lg);padding:1.5rem 1.5rem 1.25rem;margin:1.25rem 0 2rem}
+    .chart-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:.2rem}
+    .chart-sub{font-size:12px;color:var(--text-ter);margin-bottom:1.1rem}
+    .chart-card img{width:100%;border-radius:6px;display:block;border:.5px solid var(--border)}
+    .chart-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:1.25rem 0 2rem}
+    .chart-pair .chart-card{margin:0}
+    @media(max-width:540px){.chart-pair{grid-template-columns:1fr}}
+
+    .pipeline{display:flex;flex-wrap:wrap;gap:10px;margin:1.25rem 0 2rem}
+    .pipe-step{background:var(--bg-card);border:.5px solid var(--border);border-radius:var(--r-md);padding:.7rem 1rem;flex:1;min-width:140px}
+    .pipe-num{font-size:10px;font-weight:500;letter-spacing:.06em;color:var(--teal-tag);margin-bottom:.25rem;text-transform:uppercase}
+    .pipe-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:.2rem}
+    .pipe-desc{font-size:11.5px;color:var(--text-sec);line-height:1.5}
+
+    .tab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:1.25rem 0 2rem}
+    .tab-card{background:var(--bg-card);border:.5px solid var(--border);border-radius:var(--r-md);padding:.85rem 1rem}
+    .tab-icon{font-size:16px;margin-bottom:.35rem}
+    .tab-title{font-size:12.5px;font-weight:500;color:var(--text);margin-bottom:.25rem}
+    .tab-desc{font-size:11.5px;color:var(--text-sec);line-height:1.5}
+
+    .res-table{width:100%;border-collapse:collapse;font-size:13px;margin:1rem 0 1.5rem}
+    .res-table th{text-align:left;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-ter);padding:.5rem .75rem;border-bottom:.5px solid var(--border-md)}
+    .res-table td{padding:.6rem .75rem;border-bottom:.5px solid var(--border);color:var(--text-sec)}
+    .res-table tr:last-child td{border-bottom:none}
+    .res-table .hl td{color:var(--text);font-weight:500}
+    .pass{color:var(--teal-tag);font-weight:500}
+    .warn{color:var(--amber-tag);font-weight:500}
+    .fail{color:var(--red-tag);font-weight:500}
+
+    .callout{background:var(--teal-bg);border-left:3px solid var(--teal-tag);border-radius:0 var(--r-md) var(--r-md) 0;padding:1rem 1.1rem;margin:1.25rem 0 2rem}
+    .callout p{color:var(--teal-tag);font-size:13.5px;margin:0}
+
+    .stack-row{display:flex;flex-wrap:wrap;gap:8px;margin:1rem 0 2rem}
+    .stack-badge{font-size:11.5px;font-weight:400;padding:4px 12px;border-radius:6px;border:.5px solid var(--border-md);color:var(--text-sec);background:var(--bg-card)}
+
+    .proj-footer{margin-top:3rem;padding-top:1.5rem;border-top:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem}
+    .proj-footer a{font-size:13px;color:var(--text-sec);text-decoration:none;display:flex;align-items:center;gap:5px}
+    .proj-footer a:hover{color:var(--text)}
+
+    @media(max-width:480px){.wrap{padding:2rem 1.1rem 4rem}.stats{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+
+  <a class="back" href="../../index.html">&larr; Back to projects</a>
+
+  <!-- HERO -->
+  <div class="tags">
+    <span class="tag tag-green">Process Mining</span>
+    <span class="tag tag-amber">Healthcare Ops</span>
+    <span class="tag tag-blue">Random Forest</span>
+    <span class="tag tag-teal">Bootstrap Simulation</span>
+    <span class="tag tag-purple">Streamlit</span>
+  </div>
+  <h1>ED Flow Intelligence</h1>
+  <p class="hero-sub">An interactive analytics dashboard that converts raw emergency department event logs into four categories of operational intelligence: executive KPIs, patient pathway maps, ML-based admission prediction, and LOS scenario simulation — packaged in a Streamlit interface accessible to clinical operations managers without a data science background.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">ED Visits</div>
+      <div class="stat-val">16,011</div>
+      <div class="stat-note">90,965 event records</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Admission AUC-ROC</div>
+      <div class="stat-val">0.946</div>
+      <div class="stat-note">Random Forest · 20% holdout</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Median LOS</div>
+      <div class="stat-val">3.22 hr</div>
+      <div class="stat-note">All triage levels</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Worst bottleneck</div>
+      <div class="stat-val">128 min</div>
+      <div class="stat-note">Assessment → Discharge avg wait</div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- THE PROBLEM -->
+  <h2>The problem</h2>
+  <p>Emergency departments log every clinical step — triage, assessment, consult requests, discharges — but these records are rarely used for real-time operational decisions. Without a structured view of patient flow, teams cannot tell which steps cause delays, which patients are heading toward admission hours before it becomes apparent, or how much a targeted efficiency gain would shift overall capacity.</p>
+  <p>This platform applies process mining and machine learning to answer all three questions from a single event log, packaging the answers into a four-tab interactive dashboard that requires no data science background to operate.</p>
+
+  <hr/>
+
+  <!-- PIPELINE -->
+  <h2>Data pipeline</h2>
+  <p>The pipeline runs end-to-end from a raw CSV event log to four categories of decision-ready insight. All preprocessing is computed once and cached with <code style="font-family:monospace;font-size:12px;background:var(--bg-muted);padding:1px 5px;border-radius:3px">@st.cache_data</code>; the dashboard renders from in-memory data frames on every user interaction.</p>
+
+  <div class="pipeline">
+    <div class="pipe-step">
+      <div class="pipe-num">Step 01</div>
+      <div class="pipe-name">Ingest & clean</div>
+      <div class="pipe-desc">Parse timestamps, deduplicate events, map triage codes to CTAS labels, derive admission flag from disposition code</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">Step 02</div>
+      <div class="pipe-name">Visit metrics</div>
+      <div class="pipe-desc">Compute per-visit LOS, door-to-triage, door-to-physician, step durations, and LWBS detection from ordered event sequences</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">Step 03</div>
+      <div class="pipe-name">Process map</div>
+      <div class="pipe-desc">Build transition matrix from consecutive event pairs; filter to forward-flow only; render as Plotly Sankey with fixed node positions</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">Step 04</div>
+      <div class="pipe-name">ML & simulation</div>
+      <div class="pipe-desc">Random Forest on pd.get_dummies-encoded features; bootstrap resampling from real LOS data for scenario simulation</div>
+    </div>
+  </div>
+
+  <!-- TAB OVERVIEW GRID -->
+  <div class="tab-grid">
+    <div class="tab-card">
+      <div class="tab-icon">📊</div>
+      <div class="tab-title">Executive Overview</div>
+      <div class="tab-desc">System status banner, 5 KPI cards, LOS box plot by triage level, LWBS and admission rates</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-icon">🔀</div>
+      <div class="tab-title">Patient Flow</div>
+      <div class="tab-desc">Sankey pathway diagram, step-level bottleneck ranking, Door-to-Triage vs CTAS benchmarks</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-icon">🤖</div>
+      <div class="tab-title">Risk & Admission</div>
+      <div class="tab-desc">Admission classifier, feature importance, high-risk flag list, zone volume vs LOS efficiency</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-icon">📈</div>
+      <div class="tab-title">Capacity Planning</div>
+      <div class="tab-desc">Hourly congestion heatmap, LOS scenario simulation with financial impact, anomaly root-cause timelines</div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- TAB 1 -->
+  <h2>Tab 1 — Executive Overview</h2>
+  <p>The status banner renders OPTIMAL / ELEVATED / CRITICAL from median LOS thresholds. Five KPI cards surface the numbers a clinical operations manager needs in under 10 seconds. The LOS box plot decomposes variance by triage level — wider boxes on L1/L2 indicate high-acuity bed-management risk that averages alone would mask.</p>
+
+  <div class="chart-card">
+    <div class="chart-title">KPI dashboard and LOS distribution by triage level</div>
+    <div class="chart-sub">Median LOS 3.22 hrs · Admission rate 13.9% · LWBS rate 0.8% · 16,011 total visits</div>
+    <img src="kpi_overview.png" alt="Executive overview tab showing system status banner, five KPI cards, and LOS box plot broken down by triage level" />
+  </div>
+
+  <hr/>
+
+  <!-- TAB 2 -->
+  <h2>Tab 2 — Patient Flow & Bottlenecks</h2>
+  <p>The Sankey diagram maps every patient pathway with link width proportional to transition volume. Red branches flowing to "Left ED" visualise LWBS patients directly in the flow. A forward-flow filter removes feedback loops that would create visual clutter; nodes are pinned to fixed x/y clinical-sequence positions so the layout is stable across filter changes.</p>
+
+  <div class="chart-card">
+    <div class="chart-title">Patient pathway Sankey — forward-flow filtered, fixed node layout</div>
+    <div class="chart-sub">Width ∝ transition volume · Red branches = Left Without Being Seen · Nodes pinned to clinical sequence left-to-right</div>
+    <img src="sankey.png" alt="Sankey diagram showing patient pathways from ambulance arrival through triage, assessment, consult, and discharge or left ED" />
+  </div>
+
+  <p>The bottleneck chart ranks every transition by average wait time. Assessment → Discharge tops the list at 128 minutes average — with a 90th-percentile tail extending to 6+ hours across 11,648 affected visits. This points to a post-assessment discharge-decision bottleneck, not a triage or arrival capacity problem, which changes the intervention target entirely.</p>
+
+  <div class="chart-card">
+    <div class="chart-title">Step-level bottleneck ranking with 90th-percentile tail risk</div>
+    <div class="chart-sub">Transitions ranked by mean wait · 90th-percentile column captures extended-stay risk · Assessment → Discharge affects 11,648 visits</div>
+    <img src="bottleneck.png" alt="Horizontal bar chart ranking patient flow transitions by average wait time, with Assessment to Discharge as the top bottleneck at 128 minutes average" />
+  </div>
+
+  <hr/>
+
+  <!-- TAB 3 -->
+  <h2>Tab 3 — Risk & Admission Analytics</h2>
+  <p>A Random Forest classifier is trained on six features per visit: triage level, age, arrival hour, day of week, physical ED zone, and pathway step count. One-hot encoding via <code style="font-family:monospace;font-size:12px;background:var(--bg-muted);padding:1px 5px;border-radius:3px">pd.get_dummies</code> avoids the ordinal-coding artifacts that affect tree ensembles when categorical variables are label-encoded. The model reaches AUC-ROC 0.946 on a stratified 20% holdout — well above the 0.75 threshold considered operationally useful for proactive bed pre-alerts.</p>
+
+  <div class="chart-card">
+    <div class="chart-title">Feature importance and high-risk visit flag list</div>
+    <div class="chart-sub">AUC-ROC 0.946 · Triage level is the dominant predictor · Flag threshold: predicted admission probability ≥ 70%</div>
+    <img src="feature_importance.png" alt="Feature importance bar chart for admission prediction model with triage level as the top predictor, alongside high-risk visit flag list" />
+  </div>
+
+  <div class="callout">
+    <p>The high-risk visit flag list surfaces patients with predicted admission probability ≥ 70% early enough to initiate proactive bed booking 4–6 hours ahead of confirmed admission — converting reactive bed scrambles into anticipatory demand management.</p>
+  </div>
+
+  <hr/>
+
+  <!-- TAB 4 -->
+  <h2>Tab 4 — Capacity Planning & Alerts</h2>
+  <p>The hourly congestion heatmap covers the top 12 transitions. It distinguishes two failure patterns that require different interventions: horizontal bands across all hours indicate systemic process failures; diagonal clusters concentrated at shift boundaries indicate handoff delays. Both patterns are invisible in daily or weekly summary statistics.</p>
+
+  <div class="chart-card">
+    <div class="chart-title">Hourly congestion heatmap — top 12 transitions</div>
+    <div class="chart-sub">Colour intensity = average wait time in minutes · Horizontal bands = systemic failures · Diagonal clusters = shift-change handoff delays</div>
+    <img src="heatmap.png" alt="Heatmap showing average wait time by hour of day across the top 12 patient flow transitions, distinguishing systemic vs shift-change delay patterns" />
+  </div>
+
+  <p>The scenario simulation bootstrap-resamples from the actual LOS distribution — preserving its real skew and heavy tail — rather than assuming normality. A manager enters a target efficiency gain; the tool projects the resulting LOS distribution, the reduction in visits exceeding 8 hours, and an estimated financial impact from reduced extended-stay costs.</p>
+
+  <div class="chart-pair">
+    <div class="chart-card">
+      <div class="chart-title">LOS scenario simulation</div>
+      <div class="chart-sub">Bootstrap resampled from 16,011 real visits — real distribution shape preserved</div>
+      <img src="simulation.png" alt="Simulation showing current vs projected LOS distribution under a target efficiency gain, with extended-stay reduction and financial impact estimate" />
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Anomaly root-cause timeline</div>
+      <div class="chart-sub">Statistical outliers flagged at Mean + 2 SD — per-visit step-level breakdown</div>
+      <img src="heatmap.png" alt="Root cause analysis timeline for a flagged outlier visit showing each step duration and which step drove the extended stay" />
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- KEY FINDINGS -->
+  <h2>Key findings</h2>
+
+  <table class="res-table">
+    <thead>
+      <tr><th>Finding</th><th>Metric</th><th>Business signal</th></tr>
+    </thead>
+    <tbody>
+      <tr class="hl">
+        <td>Assessment → Discharge bottleneck</td>
+        <td>128 min avg · 11,648 visits</td>
+        <td class="warn">Discharge decision, not arrival capacity</td>
+      </tr>
+      <tr class="hl">
+        <td>Consult pathway LOS premium</td>
+        <td>9.35 hr vs 2.68 hr (non-consult)</td>
+        <td class="warn">3.5× LOS multiplier from specialist requests</td>
+      </tr>
+      <tr class="hl">
+        <td>L1 CTAS compliance</td>
+        <td>7 min median vs 0 min target</td>
+        <td class="fail">Accreditation gap at most critical triage level</td>
+      </tr>
+      <tr class="hl">
+        <td>L2–L4 CTAS compliance</td>
+        <td>All exceed benchmark targets</td>
+        <td class="fail">Structural response-time gaps across 3 levels</td>
+      </tr>
+      <tr class="hl">
+        <td>Admission prediction model</td>
+        <td>AUC-ROC 0.946</td>
+        <td class="pass">Operationally useful for bed pre-alerts</td>
+      </tr>
+      <tr class="hl">
+        <td>LWBS rate</td>
+        <td>0.8% overall</td>
+        <td class="pass">Below 2% national concern threshold</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr/>
+
+  <!-- TECH STACK -->
+  <h2>Tech stack</h2>
+  <p>Pure Python — no process mining framework dependencies. The Sankey diagram is built directly from raw transition counts using Plotly Graph Objects; no NetworkX or external graph library is required.</p>
+
+  <div class="stack-row">
+    <span class="stack-badge">Streamlit 1.31+</span>
+    <span class="stack-badge">pandas</span>
+    <span class="stack-badge">NumPy</span>
+    <span class="stack-badge">Plotly Express</span>
+    <span class="stack-badge">Plotly Graph Objects</span>
+    <span class="stack-badge">scikit-learn</span>
+    <span class="stack-badge">Random Forest</span>
+    <span class="stack-badge">Bootstrap resampling</span>
+  </div>
+
+  <hr/>
+
+  <!-- FUTURE DIRECTIONS -->
+  <h2>Future directions</h2>
+  <p>Several extensions could deepen operational value:</p>
+  <ul style="font-size:14px;color:var(--text-sec);font-weight:300;padding-left:1.25rem;line-height:2.2">
+    <li>Live ADT feed — replace the static CSV with a hospital Admission-Discharge-Transfer feed for real-time dashboarding</li>
+    <li>Conformance checking — flag visits that deviate from the standard clinical pathway (ISO 9001 audit use case)</li>
+    <li>Probability calibration — add Platt scaling to the admission model to improve clinical decision threshold reliability</li>
+    <li>Bed demand forecast — extend the simulation to project inpatient bed demand 24 hours ahead from current admission probability scores</li>
+    <li>Multi-site comparison — run the same pipeline across multiple EDs to benchmark process efficiency and identify best practices</li>
+  </ul>
+
+  <div class="proj-footer">
+    <a href="../../index.html">&larr; All projects</a>
+    <a href="http://github.com/HzyBetty/emergency-department-operations" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+      View on GitHub
+    </a>
+  </div>
+
+</main>
+</body>
+</html>
+
+
